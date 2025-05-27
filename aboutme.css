@@ -39,10 +39,7 @@ hr{
 }
 
 .container {
-    display: grid;
     position: relative;
-    place-items: center;  /* horizontal center */
-    align-items: center;      /* vertical center */
     height: 150px;
   }
 
@@ -50,7 +47,7 @@ hr{
     position: absolute;
     inset: 0;
     margin: auto;
-    width: 80%;
+    width: fit-content;
     height: fit-content;
     text-align: center;
   }
