@@ -40,14 +40,13 @@ hr{
 
 .container {
     position: relative;
-    height: 150px;
+    display: grid;
+    place-items: center;
+    height: 11rem;
   }
 
   .centered {
-    position: absolute;
-    inset: 0;
-    margin: auto;
-    width: fit-content;
-    height: fit-content;
+    width: 90%;             
+    max-width: 500px;        
     text-align: center;
   }
