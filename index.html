@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta name="description" content="Portfolio of Sakshi Bhatia,
+  an MS Robotics student at Northeastern University, Boston. Showcasing projects, research, and technical skills in robotics and AI.">
+
+    <! -- This is the page description that appears below the page link in the search results page of a search engine -->
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Sakshi Bhatia Portfolio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="light">
+  <!--<button id="theme-toggle">Toggle Theme</button>-->
+  <button id="emojiToggle" aria-label="Toggle theme">🌙</button>
+  <header class="banner">
+    <h1>Sakshi Bhatia - Embodied AI</h1>
+    <blockquote style="font-family: system-ui;">
+      “AI is one of the most profound things we’re working on as humanity. It’s more profound than fire or electricity.”<br>
+      — Sundar Pichai, CEO of Google and Alphabet
+
+    </blockquote>
+  </header>
+  
+  
+  <section class="portfolio-section">
+    <h1>Projects</h1>
+    <p style="font-family: Georgia, system-ui;">
+      A glimpse into the various projects I have done on a personal level, or as a part of a course or an internship.
+      Click on the cards below to explore more about each project.
+      <br>
+    </p>
+
+    <div class="card-container">
+      <div class="card">
+        <a href="https://github.com/sakshi79/Bipedal-RL"> <img src="images/bipedal.png" alt="Work 1"> </a>
+        <h3>Bipedal-Walker using PPO and variants</h3>
+        <p class="date">📅 May 13, 2025</p>
+        <p>Trained a Bipedal-Walker agent from the openAI Gym environment using standard PPO,
+           PPO with self-attention over the observations, and PPO with cross-attention between the actions and observations.
+          Click to know the outcomes of the study.</p>
+      </div>
+      <div class="card">
+        <a href="https://github.com/sakshi79/aefaalgo"> <img src="images/aefa.png" alt="Work 2"> </a>
+        <h3>Artificial Electric Field Algorithm</h3>
+        <p class="date">📅 May 13, 2025</p>
+        <p>Python package for AEFA, a novel evolutionary algorithm for multi-dimensional, non-linear optimizations</p>
+      </div> 
+      <div class="card">
+        <a href="https://www.kaggle.com/code/sara77/art-generation-with-vgg19-nst"> <img src="images/art_generation.png" alt="Work 6"> </a>
+        <h3>I'm something of a painter myself!</h3>
+        <p class="date">📅 May 13, 2023</p>
+        <p>Art generation using Neural Style Transfer, transferring an art style to content given.</p>
+      </div>
+    </div>
+    <br>
+    <div class = "card-container2">
+      <div class="card">
+        <a href="https://github.com/sakshi79/Histogram_Filter"> <img src="images/histogram.png" alt="Work 3"> </a>
+        <h3>Histogram filter for robot localization</h3>
+        <p class="date">📅 May 13, 2025</p>
+        <p>Simulating a histogram filter for robot trying to localize itself in the 2D world, implemented in both C++ and Python.</p>
+      </div>
+      <div class="card">
+        <a href="https://drive.google.com/drive/folders/1OI_GBHd4kB84C_VmJu4h1kU3v6rsCZul?usp=sharing"> <img src="images/ego_motion.png" alt="Work 5"> </a>
+        <h3>Ego-motion estimation using multi-camera optical-flow</h3>
+        <p class="date">📅 May 13, 2025</p>
+        <p>This project attempts to estimate the translational and roational velocities of a vehicle using multi-camera optical-flow
+          data from Nuscenes dataset, and we come up with interesting conclusions...</p>
+        </p>
+      </div>
+      <div class="card">
+        <img src="images/3dp1.jpg" alt="Work 4">
+        <h3>3D printing: Process parameter study</h3>
+        <p class="date">📅 May 13, 2025</p>
+        <p>3D printed polymer parts are prone to various deformations and deviations from the ideal deviations,
+          choosing the optimal process parameters can go a long way in preventing them.</p>
+      </div>
+    </div>
+  </section>
+  <hr>
+
+  <center>
+    <h3><a href="about.html"> About Me </a> </h3>
+  </center>
+  
+<br>
+  <footer>
+    <p>© 2025 Sakshi Bhatia. All rights reserved.</p>
+    <p>Made with ❤️ using HTML, CSS, and JavaScript. Last updated: May 13, 2025</p>
+  </footer>
+</body>
+</html>
+
+<!--<script>
+  const toggleBtn = document.getElementById('theme-toggle');
+  toggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    document.body.classList.toggle('light');
+  });
+
+</script>-->
+<script>
+  const toggleBtn = document.getElementById('emojiToggle');
+
+  // Force dark mode on load
+  document.body.classList.add('dark');
+  toggleBtn.textContent = '🌞';
+
+  toggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    const isDark = document.body.classList.contains('dark');
+    toggleBtn.textContent = isDark ? '🌞' : '🌙';
+  });
+
+  
+</script>
+
