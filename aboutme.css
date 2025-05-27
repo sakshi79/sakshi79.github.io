@@ -40,8 +40,9 @@ hr{
 
 .container {
     display: grid;
+    position: relative;
     place-items: center;  /* horizontal center */
-         /* vertical center */
+    align-items: center;      /* vertical center */
     height: 150px;
   }
 
