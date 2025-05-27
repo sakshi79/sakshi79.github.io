@@ -26,7 +26,12 @@ body {
     font-size: 2em;
     font-family: Lucida Handwriting , cursive;
   }
-  
+
+  h2 {
+    font-size: 2em;
+    font-family: Arial, sans-serif;
+  }
+
   blockquote {
     font-style: italic;
     color: #666;
