@@ -200,7 +200,7 @@ body {
     right: 1rem;
     z-index: 10; /* higher than the banner's ::before */
     font-size: 24px;
-    background-color: #fdfdfd;  
+    background-color: white;  
     border: 2px solid #f8f406;  
     border-radius: 50%;
     padding: 1px;
@@ -211,7 +211,7 @@ body {
   
   #emojiToggle:hover {
     transform: scale(1.5) rotate(-15deg);
-    background-color: #ffc1cc;
+    background-color: white;
   }
 
  
