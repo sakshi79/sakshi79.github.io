@@ -222,3 +222,123 @@ body {
   }
   
   
+  
+
+
+
+  
+  .timeline-container {
+    
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    transition: 0.3s ease;
+  }
+
+  .card {
+    background: #f4f4f4;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    transition: 0.3s ease;
+  }
+  
+  
+  .timeline-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 3rem;
+    
+  }
+  
+  .timeline {
+    position: relative;
+    margin: 0 auto;
+    padding: 0 0 2rem 0;
+  }
+  
+  .timeline::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 100%;
+    background: black;
+  }
+  
+  .timeline-item {
+    position: relative;
+    width: 50%;
+    padding: 1rem 2rem;
+    box-sizing: border-box;
+  }
+  
+  .timeline-item.left {
+    left: 0;
+    text-align: right;
+  }
+  
+  .timeline-item.right {
+    left: 50%;
+    text-align: left;
+  }
+  
+  .timeline-item .content {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 10px;
+    display: inline-block;
+    max-width: 90%;
+  }
+  
+  .timeline-item .date {
+    font-size: 0.8rem;
+    background-color: #396e92;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+  }
+  
+  .timeline-dot {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: red;
+    border: 3px solid white;
+    border-radius: 50%;
+    z-index: 10;
+  }
+  
+  /* Responsive */
+  @media screen and (max-width: 768px) {
+    .timeline::before {
+      left: 8px;
+    }
+  
+    .timeline-item {
+      width: 100%;
+      padding-left: 2rem;
+      padding-right: 1rem;
+    }
+  
+    .timeline-item.left,
+    .timeline-item.right {
+      left: 0;
+      text-align: left;
+    }
+  
+    .timeline-dot {
+      left: 8px;
+    }
+  
+    .timeline-item .content {
+      max-width: 100%;
+    }
+  }
+  
