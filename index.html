@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sakshi Bhatia | Space Robotics Engineer</title>
+    
+    <!-- Google Fonts for Space/Tech Theme -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --primary: #00f3ff;
+            --secondary: #bc13fe;
+            --glass: rgba(10, 15, 30, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #e0e0e0;
+            --text-highlight: #ffffff;
+        }
+
+        body { 
+            margin: 0; 
+            overflow: hidden; /* Hide scrollbars on body, scroll content instead */
+            background-color: #000; 
+            font-family: 'Rajdhani', sans-serif;
+            color: var(--text-main);
+        }
+
+        canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            z-index: -1; 
+        }
+
+        /* --- UI CONTAINER --- */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* Allow scrolling content */
+            z-index: 10;
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--primary);
+            padding: 10px 25px;
+            margin: 0 10px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(0, 243, 255, 0.15);
+            box-shadow: 0 0 15px var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* --- SECTIONS --- */
+        .section {
+            display: none; /* Hidden by default */
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- CARDS & LAYOUT --- */
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: 4px; /* Industrial sharp edges */
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+        }
+
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--text-highlight);
+            text-transform: uppercase;
+        }
+
+        h1 { font-size: 3rem; margin-bottom: 0.5rem; text-shadow: 0 0 20px rgba(0, 243, 255, 0.5); }
+        h2 { font-size: 1.8rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; margin-bottom: 20px; }
+        h3 { font-size: 1.3rem; margin-top: 0; color: var(--primary); }
+
+        .date { font-weight: 700; color: var(--secondary); display: block; margin-bottom: 10px; font-size: 0.9rem; }
+        
+        ul { list-style-type: none; padding: 0; }
+        li { margin-bottom: 8px; padding-left: 20px; position: relative; line-height: 1.6; }
+        li::before { content: '>'; position: absolute; left: 0; color: var(--primary); }
+
+        /* --- HOME PROFILE --- */
+        .profile-container {
+            text-align: center;
+            margin-top: 5vh;
+        }
+
+        .profile-img {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            object-fit: cover;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+            margin-bottom: 20px;
+            background-color: #111; /* Placeholder bg */
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+            color: #aaa;
+        }
+
+        .social-links a {
+            color: var(--text-highlight);
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border-bottom: 1px solid transparent;
+            transition: 0.3s;
+        }
+        .social-links a:hover { border-bottom-color: var(--primary); color: var(--primary); }
+
+        /* --- SKILLS GRID --- */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .skill-item strong { color: var(--primary); }
+
+        /* --- SCROLLBAR --- */
+        #ui-layer::-webkit-scrollbar { width: 8px; }
+        #ui-layer::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
+        #ui-layer::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 4px; }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            nav { flex-wrap: wrap; }
+            .nav-btn { margin-bottom: 10px; flex: 1 1 40%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- UI Overlay Layer -->
+    <div id="ui-layer">
+        <nav>
+            <button class="nav-btn active" onclick="showSection('home')">Mission Control</button>
+            <button class="nav-btn" onclick="showSection('experience')">Experience</button>
+            <button class="nav-btn" onclick="showSection('projects')">Projects</button>
+            <button class="nav-btn" onclick="showSection('achievements')">Achievements</button>
+            <button class="nav-btn" onclick="showSection('education')">Education</button>
+        </nav>
+
+        <!-- HOME SECTION -->
+        <div id="home" class="section active">
+            <div class="profile-container">
+                <img src="me.jpeg" alt="Sakshi Bhatia" class="profile-img">
+                
+                <h1>Sakshi Bhatia</h1>
+                <p class="tagline">
+                    MS Robotics Candidate @ Northeastern University<br>
+                    <!-- <span style="color: var(--primary)">Aspiring to build the infrastructure for human habitation in space.</span> -->
+                    <span style="color: var(--primary)">Aspiring to build generalizable robots.</span>
+                </p>
+
+                <div class="card" style="text-align: left; margin-top: 40px;">
+                    <h3>Profile Summary</h3>
+                    <p>
+                        Robotics researcher specializing in robotic manipulation, working at at the HelpingHands Lab. I am passionate about applying reinforcement learning,
+                        and generative AI to solve the complex challenges of operating robots in uncertain, unseen environments.
+                        <!-- construction and maintenance in unstructured extraterrestrial environments. -->
+                    </p>
+                    <div class="social-links" style="text-align: center; margin-top: 20px;">
+                        <a href="bhatia.saks@northeastern.edu">Email</a>
+                        <a href="https://www.linkedin.com/in/sakshi-bhatia-sb/">LinkedIn</a>
+                        <a href="https://github.com/sakshi79">GitHub</a>
+                        <a href="https://medium.com/@sakshi77">Medium</a>
+                    </div>
+                </div>
+
+                <div class="card" style="text-align: left;">
+                    <h3>Technical Arsenal</h3>
+                    <div class="skills-grid">
+                        <div class="skill-item"><strong>Languages:</strong> Python, C/C++, MATLAB, SQL</div>
+                        <div class="skill-item"><strong>Frameworks:</strong> PyTorch, TensorFlow, Isaac Sim, Robosuite</div>
+                        <div class="skill-item"><strong>Sim/Tools:</strong> Mujoco, CARLA, Fusion360, Arduino</div>
+                        <div class="skill-item"><strong>Libraries:</strong> OpenCV, Gymnasium</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXPERIENCE SECTION -->
+        <div id="experience" class="section">
+            <h2>Mission Log (Experience)</h2>
+
+            <div class="card">
+                <h3>Graduate Research Assistant | HelpingHands Lab, NEU</h3>
+                <span class="date">Feb 2025 – Present | Boston, MA</span>
+                <ul>
+                    <li>Built a GELLO arm to record demonstration data; reproduced Diffusion Policy in simulation and on UR5 arm.</li>
+                    <li>[In Progress] modified Diffusion Policy combining VLMs for visual generalization</li>
+                    <li>Focus: Robotic Manipulation, Sample Efficiency, Generalization.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Teaching Assistant | EECE Dept, Northeastern Univ</h3>
+                <span class="date">Sep 2025 – Present</span>
+                <ul>
+                    <li>Assisting for EECE5550 Mobile Robotics (Perception, Planning, Control).</li>
+                    <li>Assembled TurtleBot3 Burger and validated hardware/software stacks.</li>
+                    <!-- <li>Approaching technical problems in different ways; documenting works.</li> -->
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Product Analyst | Sprinklr</h3>
+                <span class="date">July 2022 – Jan 2023 | Bangalore, India</span>
+                <ul>
+                    <li>Deployed regex-based automation for content filtering on child-safe platforms, reducing manual work by 93%.</li>
+                    <li>Managed 15+ global clients and executed 40+ data insight dashboards.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Research Intern | NIT Jalandhar</h3>
+                <span class="date">July 2021 – Sep 2021</span>
+                <ul>
+                    <li>Developed a Python package for 'Artificial Electric Field', a novel optimization algorithm published on PyPI.</li>
+                    <li>Visualized convergence for multi-dimensional non-linear problems.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- PROJECTS SECTION -->
+        <div id="projects" class="section">
+            <h2>System Modules (Projects)</h2>
+
+            <div class="card">
+                <h3>Diffusion-guided Intrinsic Curiosity</h3>
+                <span class="date">Oct 2025 – Ongoing</span>
+                <p>Solving long-horizon tasks with minimal demonstrations.</p>
+                <ul>
+                    <li>Implemented Intrinsic Curiosity Module (ICM) for sparse environments.</li>
+                    <li>Trained a diffusion model to learn state sequences while ICM predicts actions.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Bipedal Walker (PPO + Attention)</h3>
+                <span class="date">Feb 2025 – April 2025</span>
+                <p>Locomotion stability for uneven terrain traversal.</p>
+                <ul>
+                    <li>Solved OpenAI Gym’s Bipedal-Walker (Avg Reward: 317) without falling.</li>
+                    <li>Implemented PPO with attention/cross-attention mechanisms and performed ablation studies.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- EDUCATION SECTION -->
+        <div id="education" class="section">
+            <h2>Training Data (Education)</h2>
+
+            <div class="card">
+                <h3>Northeastern University</h3>
+                <span class="date">Sept 2024 – Dec 2026 | Boston, MA</span>
+                <p><strong>MS in Robotics</strong></p>
+                <p>GPA: 4.0/4.0</p>
+                <p><em>Focus: Advanced Computer Vision, Reinforcement Learning, Geometrical Deep Learning.</em></p>
+            </div>
+
+            <div class="card">
+                <h3>National Institute of Technology, Jalandhar</h3>
+                <span class="date">Aug 2018 – May 2022 | India</span>
+                <p><strong>Bachelor of Technology</strong></p>
+                <p>Industrial and Production Engineering (Minor in Soft Computing/Mechatronics)</p>
+                <p>GPA: 8.09/10</p>
+            </div>
+        </div>
+
+        
+
+        <!-- ACHIEVEMENTS SECTION -->
+        <div id="achievements" class="section">
+            <h2>Accomplishments & Activities</h2>
+
+            <div class="card">
+                <h3>Publications</h3>
+                <p>
+                    <strong>Fuzzy-based techniques for clustering in wireless sensor networks (WSNs):</strong> Recent advances, challenges, and future directions.<br>
+                    <span style="font-size:0.9rem; color:var(--primary)">DOI: https://doi.org/10.1002/dac.5583</span>
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>Achievements</h3>
+                <ul>
+                    <li><strong>GATE Data Science & AI (2024):</strong> All India Rank 1243 / 39210 (Percentile: 96.83).</li>
+                    <li><strong>Robert Bosch Centre for Data Science and AI:</strong> Cleared Post Baccalaureate Fellowship Exam (IIT Madras, Oct 2023).</li>
+                    <li><strong>Best Intern Award:</strong> Hybrid Electric Vehicles Internship (Dec 2018).</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Extra Activities</h3>
+                <ul>
+                    <li><strong>Transmission & Fabrication Engineer (Team Avishkar, 2018-2019):</strong> Designed gear characteristics, simulated transmission in MATLAB-Simulink, fabricated vehicle body using welding/cutting techniques.</li>
+                    <li><strong>Google Developer’s Student Club (2020-2022):</strong> Organized workshops and mentoring sessions in Machine Learning.</li>
+                    <li><strong>Entrepreneurship Cell (2019-2022):</strong> Official social media manager; actively created awareness on entrepreneurship.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="height: 50px;"></div> <!-- Spacer -->
+    </div>
+
+    <!-- Import Three.js via CDN -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+
+    <!-- UI Logic Script -->
+    <script>
+        function showSection(id) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            // Remove active class from buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(id).classList.add('active');
+            // Highlight button
+            // Find the button with onclick matching the id
+            const btns = document.getElementsByTagName('button');
+            for(let btn of btns) {
+                if(btn.getAttribute('onclick').includes(id)) {
+                    btn.classList.add('active');
+                }
+            }
+        }
+    </script>
+
+    <!-- Three.js Background Script -->
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- Configuration ---
+        const PARTICLE_COUNT = 4000;
+        const PARTICLE_SIZE = 0.3; // Smaller, star-like
+        const MOUSE_RADIUS = 5; 
+        const MOUSE_FORCE = 0.08; 
+        const RETURN_SPEED = 0.03; // Slower, driftier
+
+        // --- Scene Setup ---
+        const scene = new THREE.Scene();
+        // Deep space fog
+        scene.fog = new THREE.FogExp2(0x050510, 0.03);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.z = 25;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+
+        // --- Generate Star Texture ---
+        const getSprite = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            grad.addColorStop(0.2, 'rgba(200, 240, 255, 0.8)');
+            grad.addColorStop(0.5, 'rgba(0, 100, 255, 0.2)');
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 32, 32);
+            return new THREE.CanvasTexture(canvas);
+        };
+
+        // --- Create Particle System ---
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(PARTICLE_COUNT * 3);
+        const originalPositions = new Float32Array(PARTICLE_COUNT * 3);
+        const colors = new Float32Array(PARTICLE_COUNT * 3);
+
+        const color1 = new THREE.Color(0x00f3ff); // Cyan
+        const color2 = new THREE.Color(0xffffff); // White
+        const color3 = new THREE.Color(0xbc13fe); // Purple accent
+
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const i3 = i * 3;
+            
+            // Wider spread for space feel
+            const x = (Math.random() - 0.5) * 70;
+            const y = (Math.random() - 0.5) * 50;
+            const z = (Math.random() - 0.5) * 50;
+
+            positions[i3] = x;
+            positions[i3 + 1] = y;
+            positions[i3 + 2] = z;
+
+            originalPositions[i3] = x;
+            originalPositions[i3 + 1] = y;
+            originalPositions[i3 + 2] = z;
+
+            // Random color mix
+            const rand = Math.random();
+            let mixedColor;
+            if(rand < 0.7) mixedColor = color1.clone().lerp(color2, Math.random());
+            else mixedColor = color3;
+
+            colors[i3] = mixedColor.r;
+            colors[i3 + 1] = mixedColor.g;
+            colors[i3 + 2] = mixedColor.b;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: PARTICLE_SIZE,
+            map: getSprite(),
+            transparent: true,
+            opacity: 0.9,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // --- Interaction ---
+        const mouse = new THREE.Vector2(9999, 9999);
+        const raycaster = new THREE.Raycaster();
+
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- Animation ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = clock.getElapsedTime();
+
+            // Slower rotation for vast space feel
+            particles.rotation.y = time * 0.02;
+            particles.rotation.x = Math.sin(time * 0.1) * 0.05;
+
+            raycaster.setFromCamera(mouse, camera);
+            const ray = raycaster.ray;
+            const positionAttribute = geometry.attributes.position;
+            
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const i3 = i * 3;
+
+                let px = positionAttribute.array[i3];
+                let py = positionAttribute.array[i3 + 1];
+                let pz = positionAttribute.array[i3 + 2];
+
+                let ox = originalPositions[i3];
+                let oy = originalPositions[i3 + 1];
+                let oz = originalPositions[i3 + 2];
+
+                // World position calc
+                const vector = new THREE.Vector3(px, py, pz);
+                vector.applyMatrix4(particles.matrixWorld);
+
+                const distanceToRay = ray.distanceToPoint(vector);
+
+                if (distanceToRay < MOUSE_RADIUS) {
+                    const force = (1 - distanceToRay / MOUSE_RADIUS) * MOUSE_FORCE;
+                    const closestPointOnRay = new THREE.Vector3();
+                    ray.closestPointToPoint(vector, closestPointOnRay);
+                    
+                    const dx = vector.x - closestPointOnRay.x;
+                    const dy = vector.y - closestPointOnRay.y;
+                    const dz = vector.z - closestPointOnRay.z;
+                    
+                    positionAttribute.array[i3]     += dx * force * 8;
+                    positionAttribute.array[i3 + 1] += dy * force * 8;
+                    positionAttribute.array[i3 + 2] += dz * force * 8;
+                }
+
+                // Elastic Return
+                positionAttribute.array[i3]     += (ox - px) * RETURN_SPEED;
+                positionAttribute.array[i3 + 1] += (oy - py) * RETURN_SPEED;
+                positionAttribute.array[i3 + 2] += (oz - pz) * RETURN_SPEED;
+                
+                // Breathing/Floating Effect
+                positionAttribute.array[i3]     += Math.sin(time * 0.5 + px) * 0.005;
+                positionAttribute.array[i3 + 1] += Math.cos(time * 0.3 + py) * 0.005;
+            }
+
+            positionAttribute.needsUpdate = true;
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
