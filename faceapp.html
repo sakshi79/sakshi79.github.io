@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real Effects — Live Camera Filters</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #e8ff47;
+    --accent2: #ff4757;
+    --accent3: #47c8ff;
+    --text: #e8e8f0;
+    --muted: #555568;
+    --card: #14141e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  header {
+    padding: 2rem 2.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  header span {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.7rem;
+    border-radius: 2px;
+  }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 0;
+    height: calc(100vh - 80px);
+  }
+
+  /* Video pane */
+  .video-pane {
+    position: relative;
+    background: #000;
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+  }
+
+  #videoEl {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #outputCanvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .video-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.2rem;
+    background: var(--bg);
+    transition: opacity 0.5s ease;
+  }
+  .video-overlay.hidden { opacity: 0; pointer-events: none; }
+
+  .video-overlay p {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-align: center;
+    max-width: 260px;
+  }
+
+  .start-btn {
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    padding: 0.85rem 2.5rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    transition: transform 0.1s, background 0.2s;
+  }
+  .start-btn:hover { background: #fff; transform: scale(1.03); }
+
+  /* Active effect badge */
+  .effect-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.8rem;
+    font-family: 'Space Mono', monospace;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .effect-badge.visible { opacity: 1; }
+
+  /* FPS counter */
+  .fps-display {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--surface);
+    overflow-y: auto;
+    padding: 1.5rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .section-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .effects-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .effect-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.7rem 0.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-align: center;
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
+    line-height: 1.4;
+  }
+
+  .effect-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.15s ease;
+    z-index: 0;
+  }
+
+  .effect-btn span { position: relative; z-index: 1; }
+
+  .effect-btn:hover {
+    border-color: var(--accent);
+    color: #0a0a0f;
+  }
+  .effect-btn:hover::before { transform: scaleY(1); }
+
+  .effect-btn.active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #0a0a0f;
+    font-weight: 700;
+  }
+  .effect-btn.active::before { transform: scaleY(1); }
+
+  .effect-btn.accent2.active,
+  .effect-btn.accent2:hover {
+    border-color: var(--accent2);
+    background: var(--accent2);
+    color: #fff;
+  }
+  .effect-btn.accent2::before { background: var(--accent2); }
+
+  .effect-btn.accent3.active,
+  .effect-btn.accent3:hover {
+    border-color: var(--accent3);
+    background: var(--accent3);
+    color: #0a0a0f;
+  }
+  .effect-btn.accent3::before { background: var(--accent3); }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Slider */
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .control-group label {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+  }
+  .control-group label span { color: var(--accent); }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    cursor: pointer;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  }
+
+  .reset-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.6rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.15s;
+    margin-top: 0.5rem;
+  }
+  .reset-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* Face detect indicator */
+  .face-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .face-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .face-dot.detected { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  @media (max-width: 700px) {
+    .main-layout {
+      grid-template-columns: 1fr;
+      grid-template-rows: 55vh 1fr;
+      height: auto;
+    }
+    .video-pane { border-right: none; border-bottom: 1px solid var(--border); }
+    .sidebar { height: auto; }
+    .effects-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>REAL EFFECTS</h1>
+  <span>WebRTC · Canvas · Live Filters</span>
+</header>
+
+<div class="main-layout">
+
+  <div class="video-pane">
+    <video id="videoEl" autoplay playsinline muted></video>
+    <canvas id="outputCanvas"></canvas>
+
+    <div class="video-overlay" id="overlay">
+      <p>GRANT CAMERA ACCESS TO BEGIN</p>
+      <button class="start-btn" onclick="startCamera()">START CAMERA</button>
+      <p style="font-size:0.62rem">Filters run entirely in your browser.<br>No data leaves your device.</p>
+    </div>
+
+    <div class="effect-badge" id="effectBadge">NONE</div>
+    <div class="fps-display" id="fpsDisplay">-- fps</div>
+  </div>
+
+  <div class="sidebar">
+    <div>
+      <p class="section-label">Color Effects</p>
+      <div class="effects-grid">
+        <button class="effect-btn" data-effect="grayscale" onclick="toggleEffect('grayscale', this)"><span>Gray&shy;scale</span></button>
+        <button class="effect-btn" data-effect="sepia" onclick="toggleEffect('sepia', this)"><span>Sepia</span></button>
+        <button class="effect-btn" data-effect="negative" onclick="toggleEffect('negative', this)"><span>Negative</span></button>
+        <button class="effect-btn" data-effect="blur" onclick="toggleEffect('blur', this)"><span>Gaussian Blur</span></button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <p class="section-label">Edge & Depth</p>
+      <div class="effects-grid">
+        <button class="effect-btn accent3" data-effect="sobelX" onclick="toggleEffect('sobelX', this)"><span>Sobel X</span></button>
+        <button class="effect-btn accent3" data-effect="sobelY" onclick="toggleEffect('sobelY', this)"><span>Sobel Y</span></button>
+        <button class="effect-btn accent3" data-effect="magnitude" onclick="toggleEffect('magnitude', this)"><span>Gradient Mag</span></button>
+        <button class="effect-btn accent3" data-effect="emboss" onclick="toggleEffect('emboss', this)"><span>Emboss</span></button>
+        <button class="effect-btn accent3" data-effect="blurQuantize" onclick="toggleEffect('blurQuantize', this)"><span>Blur Quantize</span></button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <p class="section-label">Face-Aware Effects</p>
+      <div class="face-status">
+        <div class="face-dot" id="faceDot"></div>
+        <span id="faceStatus">NO FACES DETECTED</span>
+      </div>
+      <div class="effects-grid" style="margin-top:0.75rem">
+        <button class="effect-btn accent2" data-effect="colorFace" onclick="toggleEffect('colorFace', this)"><span>Color Face</span></button>
+        <button class="effect-btn accent2" data-effect="blurOutside" onclick="toggleEffect('blurOutside', this)"><span>Blur BG</span></button>
+        <button class="effect-btn accent2" data-effect="haloSparkles" onclick="toggleEffect('haloSparkles', this)"><span>Halo ✦</span></button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <p class="section-label">Parameters</p>
+      <div class="control-group">
+        <label>SEPIA STRENGTH <span id="sepiaVal">0.85</span></label>
+        <input type="range" id="sepiaStrength" min="0" max="1" step="0.05" value="0.85"
+          oninput="document.getElementById('sepiaVal').textContent=this.value">
+      </div>
+      <div class="control-group" style="margin-top:0.75rem">
+        <label>QUANTIZE LEVELS <span id="quantizeVal">10</span></label>
+        <input type="range" id="quantizeLevels" min="2" max="32" step="1" value="10"
+          oninput="document.getElementById('quantizeVal').textContent=this.value">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="reset-btn" onclick="resetAll()">RESET ALL EFFECTS</button>
+
+  </div>
+</div>
+
+<!-- Face detection via face-api.js (tiny model, client side) -->
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+const activeEffects = new Set();
+let animFrame = null;
+let fpsTime = performance.now();
+let fpsCount = 0;
+let detectedFaces = [];
+let frameCount = 0;
+
+// Face detection using browser APIs (no external lib needed for basic region detection)
+// We use a simple skin-color heuristic for face regions when face-api isn't available
+// For a production app you'd load a TF model — here we skip heavyweight deps.
+
+const video = document.getElementById('videoEl');
+const canvas = document.getElementById('outputCanvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+// ─── Camera ───────────────────────────────────────────────────────────────────
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720, facingMode: 'user' } });
+    video.srcObject = stream;
+    await video.play();
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    document.getElementById('overlay').classList.add('hidden');
+    loop();
+  } catch(e) {
+    alert('Camera access denied or unavailable: ' + e.message);
+  }
+}
+
+// ─── Effect Toggle ────────────────────────────────────────────────────────────
+function toggleEffect(name, btn) {
+  if (activeEffects.has(name)) {
+    activeEffects.delete(name);
+    btn.classList.remove('active');
+  } else {
+    activeEffects.add(name);
+    btn.classList.add('active');
+  }
+  updateBadge();
+}
+
+function resetAll() {
+  activeEffects.clear();
+  document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
+  updateBadge();
+}
+
+function updateBadge() {
+  const badge = document.getElementById('effectBadge');
+  if (activeEffects.size === 0) {
+    badge.textContent = 'NONE';
+    badge.classList.remove('visible');
+  } else {
+    badge.textContent = [...activeEffects].join(' · ').toUpperCase();
+    badge.classList.add('visible');
+  }
+}
+
+// ─── Main Loop ────────────────────────────────────────────────────────────────
+function loop() {
+  animFrame = requestAnimationFrame(loop);
+  if (video.readyState < 2) return;
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  ctx.drawImage(video, 0, 0);
+  let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  const sep = parseFloat(document.getElementById('sepiaStrength').value);
+  const qlvl = parseInt(document.getElementById('quantizeLevels').value);
+
+  // Lazy face detection every 8 frames
+  frameCount++;
+  if (frameCount % 8 === 0 && needsFaceEffects()) {
+    detectedFaces = detectFaces(imageData);
+    updateFaceStatus();
+  }
+
+  // Apply active effects in order
+  if (activeEffects.has('grayscale'))    applyGrayscale(imageData);
+  if (activeEffects.has('sepia'))        applySepia(imageData, sep);
+  if (activeEffects.has('negative'))     applyNegative(imageData);
+  if (activeEffects.has('blur'))         imageData = applyBlur5x5(imageData);
+  if (activeEffects.has('sobelX'))       imageData = applySobelX(imageData);
+  if (activeEffects.has('sobelY'))       imageData = applySobelY(imageData);
+  if (activeEffects.has('magnitude'))    imageData = applyGradientMagnitude(imageData);
+  if (activeEffects.has('emboss'))       imageData = applyEmboss(imageData);
+  if (activeEffects.has('blurQuantize')) imageData = applyBlurQuantize(imageData, qlvl);
+  if (activeEffects.has('colorFace'))    imageData = applyColorFace(imageData, detectedFaces);
+  if (activeEffects.has('blurOutside'))  imageData = applyBlurOutsideFaces(imageData, detectedFaces);
+  if (activeEffects.has('haloSparkles')) {
+    ctx.putImageData(imageData, 0, 0);
+    drawHaloSparkles(ctx, detectedFaces, frameCount);
+    imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+
+  // FPS
+  fpsCount++;
+  const now = performance.now();
+  if (now - fpsTime >= 1000) {
+    document.getElementById('fpsDisplay').textContent = fpsCount + ' fps';
+    fpsCount = 0;
+    fpsTime = now;
+  }
+}
+
+function needsFaceEffects() {
+  return activeEffects.has('colorFace') || activeEffects.has('blurOutside') || activeEffects.has('haloSparkles');
+}
+
+// ─── Face Detection (skin-tone heuristic) ────────────────────────────────────
+function detectFaces(imageData) {
+  const d = imageData.data, w = imageData.width, h = imageData.height;
+  const scale = 4; // downsample for speed
+  const sw = Math.floor(w / scale), sh = Math.floor(h / scale);
+  const mask = new Uint8Array(sw * sh);
+
+  for (let y = 0; y < sh; y++) {
+    for (let x = 0; x < sw; x++) {
+      const si = (y * scale * w + x * scale) * 4;
+      const r = d[si], g = d[si+1], b = d[si+2];
+      // YCbCr skin heuristic
+      const Y  =  0.299*r + 0.587*g + 0.114*b;
+      const Cb = -0.169*r - 0.331*g + 0.500*b + 128;
+      const Cr =  0.500*r - 0.419*g - 0.081*b + 128;
+      mask[y * sw + x] = (Y > 80 && Cb >= 77 && Cb <= 127 && Cr >= 133 && Cr <= 173) ? 1 : 0;
+    }
+  }
+
+  // Find largest connected blob (simple flood-fill bounding box)
+  const visited = new Uint8Array(sw * sh);
+  let bestBox = null, bestCount = 0;
+
+  for (let y = 5; y < sh-5; y++) {
+    for (let x = 5; x < sw-5; x++) {
+      if (mask[y*sw+x] && !visited[y*sw+x]) {
+        // BFS
+        const queue = [[x,y]];
+        visited[y*sw+x] = 1;
+        let minX=x,maxX=x,minY=y,maxY=y,count=0;
+        while (queue.length) {
+          const [cx,cy] = queue.pop();
+          count++;
+          if (cx<minX) minX=cx; if (cx>maxX) maxX=cx;
+          if (cy<minY) minY=cy; if (cy>maxY) maxY=cy;
+          for (const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+            const nx=cx+dx, ny=cy+dy;
+            if (nx>=0&&nx<sw&&ny>=0&&ny<sh&&mask[ny*sw+nx]&&!visited[ny*sw+nx]) {
+              visited[ny*sw+nx]=1;
+              queue.push([nx,ny]);
+            }
+          }
+        }
+        if (count > bestCount && (maxX-minX)>8 && (maxY-minY)>8) {
+          bestCount=count;
+          bestBox={x:minX*scale,y:minY*scale,width:(maxX-minX)*scale,height:(maxY-minY)*scale};
+        }
+      }
+    }
+  }
+
+  return bestBox && bestCount > 100 ? [bestBox] : [];
+}
+
+function updateFaceStatus() {
+  const dot = document.getElementById('faceDot');
+  const txt = document.getElementById('faceStatus');
+  if (detectedFaces.length > 0) {
+    dot.classList.add('detected');
+    txt.textContent = detectedFaces.length + ' FACE DETECTED';
+  } else {
+    dot.classList.remove('detected');
+    txt.textContent = 'NO FACES DETECTED';
+  }
+}
+
+// ─── Filters ──────────────────────────────────────────────────────────────────
+
+function applyGrayscale(imageData) {
+  const d = imageData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const gray = Math.min(255, Math.max(0, 0.6*(255-d[i+2]) + 0.2*d[i+1] + 0.2*d[i]));
+    d[i] = d[i+1] = d[i+2] = gray;
+  }
+}
+
+function applySepia(imageData, strength=0.85) {
+  const d = imageData.data;
+  const w = imageData.width, h = imageData.height;
+  const cx = w/2, cy = h/2;
+  const maxDist = Math.sqrt(cx*cx + cy*cy);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y*w+x)*4;
+      const dx=x-cx, dy=y-cy;
+      const vignette = Math.max(0, 1 - strength*(dx*dx+dy*dy)/(maxDist*maxDist));
+      const R=d[i], G=d[i+1], B=d[i+2]; // note: canvas is RGBA not BGR
+      d[i]   = clamp((0.393*R + 0.769*G + 0.189*B)*vignette);
+      d[i+1] = clamp((0.349*R + 0.686*G + 0.168*B)*vignette);
+      d[i+2] = clamp((0.272*R + 0.534*G + 0.131*B)*vignette);
+    }
+  }
+}
+
+function applyNegative(imageData) {
+  const d = imageData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i] = 255-d[i]; d[i+1] = 255-d[i+1]; d[i+2] = 255-d[i+2];
+  }
+}
+
+function applyBlur5x5(imageData) {
+  const src = imageData.data, w = imageData.width, h = imageData.height;
+  const out = new ImageData(w, h);
+  const dst = out.data;
+  const kernel = [1,2,4,2,1, 2,4,8,4,2, 4,8,16,8,4, 2,4,8,4,2, 1,2,4,2,1];
+  const ks = 100;
+
+  for (let y=2; y<h-2; y++) {
+    for (let x=2; x<w-2; x++) {
+      let sR=0,sG=0,sB=0;
+      for (let ky=-2;ky<=2;ky++) {
+        for (let kx=-2;kx<=2;kx++) {
+          const pi = ((y+ky)*w+(x+kx))*4;
+          const wi = (ky+2)*5+(kx+2);
+          sR+=kernel[wi]*src[pi]; sG+=kernel[wi]*src[pi+1]; sB+=kernel[wi]*src[pi+2];
+        }
+      }
+      const oi=(y*w+x)*4;
+      dst[oi]=sR/ks; dst[oi+1]=sG/ks; dst[oi+2]=sB/ks; dst[oi+3]=255;
+    }
+  }
+  // copy border pixels
+  for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
+    if (y<2||y>=h-2||x<2||x>=w-2) {
+      const i=(y*w+x)*4;
+      dst[i]=src[i]; dst[i+1]=src[i+1]; dst[i+2]=src[i+2]; dst[i+3]=255;
+    }
+  }
+  return out;
+}
+
+// Separable Gaussian for blurQuantize (horizontal then vertical)
+function blur5x5Separable(imageData) {
+  const src = imageData.data, w = imageData.width, h = imageData.height;
+  const tmp = new Float32Array(w*h*3);
+  const kr = [1,2,4,2,1]; const ks = 10;
+
+  // horizontal
+  for (let y=0;y<h;y++) {
+    for (let x=2;x<w-2;x++) {
+      let sR=0,sG=0,sB=0;
+      for (let k=-2;k<=2;k++) {
+        const pi=((y*w)+(x+k))*4;
+        sR+=kr[k+2]*src[pi]; sG+=kr[k+2]*src[pi+1]; sB+=kr[k+2]*src[pi+2];
+      }
+      const ti=(y*w+x)*3;
+      tmp[ti]=sR/ks; tmp[ti+1]=sG/ks; tmp[ti+2]=sB/ks;
+    }
+  }
+
+  const out = new ImageData(w, h);
+  const dst = out.data;
+
+  // vertical
+  for (let y=2;y<h-2;y++) {
+    for (let x=2;x<w-2;x++) {
+      let sR=0,sG=0,sB=0;
+      for (let k=-2;k<=2;k++) {
+        const ti=((y+k)*w+x)*3;
+        sR+=kr[k+2]*tmp[ti]; sG+=kr[k+2]*tmp[ti+1]; sB+=kr[k+2]*tmp[ti+2];
+      }
+      const oi=(y*w+x)*4;
+      dst[oi]=sR/ks; dst[oi+1]=sG/ks; dst[oi+2]=sB/ks; dst[oi+3]=255;
+    }
+  }
+  for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
+    if (y<2||y>=h-2||x<2||x>=w-2) {
+      const i=(y*w+x)*4; dst[i]=src[i]; dst[i+1]=src[i+1]; dst[i+2]=src[i+2]; dst[i+3]=255;
+    }
+  }
+  return out;
+}
+
+function sobelX(imageData) {
+  const src = imageData.data, w = imageData.width, h = imageData.height;
+  const sx = new Int16Array(w*h*3);
+  for (let y=1;y<h-1;y++) {
+    for (let x=1;x<w-1;x++) {
+      for (let c=0;c<3;c++) {
+        const get=(dy,dx)=>src[((y+dy)*w+(x+dx))*4+c];
+        sx[(y*w+x)*3+c] = -get(-1,-1)+get(-1,1) + -2*get(0,-1)+2*get(0,1) + -get(1,-1)+get(1,1);
+      }
+    }
+  }
+  return sx;
+}
+
+function sobelY(imageData) {
+  const src = imageData.data, w = imageData.width, h = imageData.height;
+  const sy = new Int16Array(w*h*3);
+  for (let y=1;y<h-1;y++) {
+    for (let x=1;x<w-1;x++) {
+      for (let c=0;c<3;c++) {
+        const get=(dy,dx)=>src[((y+dy)*w+(x+dx))*4+c];
+        sy[(y*w+x)*3+c] = -get(-1,-1)-2*get(-1,0)-get(-1,1) + get(1,-1)+2*get(1,0)+get(1,1);
+      }
+    }
+  }
+  return sy;
+}
+
+function applySobelX(imageData) {
+  const sx = sobelX(imageData);
+  const w=imageData.width, h=imageData.height;
+  const out=new ImageData(w,h); const dst=out.data;
+  for (let i=0;i<w*h;i++) {
+    dst[i*4]   = clamp(Math.abs(sx[i*3]));
+    dst[i*4+1] = clamp(Math.abs(sx[i*3+1]));
+    dst[i*4+2] = clamp(Math.abs(sx[i*3+2]));
+    dst[i*4+3] = 255;
+  }
+  return out;
+}
+
+function applySobelY(imageData) {
+  const sy = sobelY(imageData);
+  const w=imageData.width, h=imageData.height;
+  const out=new ImageData(w,h); const dst=out.data;
+  for (let i=0;i<w*h;i++) {
+    dst[i*4]   = clamp(Math.abs(sy[i*3]));
+    dst[i*4+1] = clamp(Math.abs(sy[i*3+1]));
+    dst[i*4+2] = clamp(Math.abs(sy[i*3+2]));
+    dst[i*4+3] = 255;
+  }
+  return out;
+}
+
+function applyGradientMagnitude(imageData) {
+  const sx=sobelX(imageData), sy=sobelY(imageData);
+  const w=imageData.width, h=imageData.height;
+  const out=new ImageData(w,h); const dst=out.data;
+  for (let i=0;i<w*h;i++) {
+    for (let c=0;c<3;c++) {
+      dst[i*4+c] = clamp(Math.sqrt(sx[i*3+c]**2 + sy[i*3+c]**2));
+    }
+    dst[i*4+3]=255;
+  }
+  return out;
+}
+
+function applyEmboss(imageData) {
+  const sx=sobelX(imageData), sy=sobelY(imageData);
+  const w=imageData.width, h=imageData.height;
+  const out=new ImageData(w,h); const dst=out.data;
+  const lx=0.7071, ly=0.7071;
+  for (let i=0;i<w*h;i++) {
+    for (let c=0;c<3;c++) {
+      dst[i*4+c] = clamp(sx[i*3+c]*lx + sy[i*3+c]*ly + 128);
+    }
+    dst[i*4+3]=255;
+  }
+  return out;
+}
+
+function applyBlurQuantize(imageData, levels=10) {
+  const blurred = blur5x5Separable(imageData);
+  const d=blurred.data;
+  const b=255/levels;
+  for (let i=0;i<d.length-1;i+=4) {
+    d[i]   = Math.floor(d[i]/b)*b;
+    d[i+1] = Math.floor(d[i+1]/b)*b;
+    d[i+2] = Math.floor(d[i+2]/b)*b;
+  }
+  return blurred;
+}
+
+function applyColorFace(imageData, faces) {
+  const d=imageData.data, w=imageData.width, h=imageData.height;
+  const out=new ImageData(w,h); const dst=out.data;
+  // Grayscale entire frame
+  for (let i=0;i<d.length;i+=4) {
+    const g = clamp(0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]);
+    dst[i]=dst[i+1]=dst[i+2]=g; dst[i+3]=255;
+  }
+  // Restore color in face regions
+  for (const face of faces) {
+    const pad=10;
+    const fx=Math.max(0,face.x-pad), fy=Math.max(0,face.y-pad);
+    const fw=Math.min(w,face.x+face.width+pad)-fx;
+    const fh=Math.min(h,face.y+face.height+pad)-fy;
+    for (let y=fy;y<fy+fh;y++) {
+      for (let x=fx;x<fx+fw;x++) {
+        const i=(y*w+x)*4;
+        dst[i]=d[i]; dst[i+1]=d[i+1]; dst[i+2]=d[i+2]; dst[i+3]=255;
+      }
+    }
+  }
+  return out;
+}
+
+function applyBlurOutsideFaces(imageData, faces) {
+  const blurred = applyBlur5x5(imageData);
+  const src=imageData.data, dst=blurred.data, w=imageData.width, h=imageData.height;
+  for (const face of faces) {
+    const roi={x:Math.max(0,face.x),y:Math.max(0,face.y),
+               w:Math.min(w,face.x+face.width)-Math.max(0,face.x),
+               h:Math.min(h,face.y+face.height)-Math.max(0,face.y)};
+    for (let y=roi.y;y<roi.y+roi.h;y++) {
+      for (let x=roi.x;x<roi.x+roi.w;x++) {
+        const i=(y*w+x)*4;
+        dst[i]=src[i]; dst[i+1]=src[i+1]; dst[i+2]=src[i+2]; dst[i+3]=255;
+      }
+    }
+  }
+  return blurred;
+}
+
+function drawHaloSparkles(ctx2d, faces, fc) {
+  for (const face of faces) {
+    const cx = face.x + face.width/2;
+    const cy = face.y - face.height/6;
+    const radius = face.width/2;
+    const sparkleCount = 20;
+    for (let i=0;i<sparkleCount;i++) {
+      const theta = Math.PI*(i/sparkleCount) + 0.1*Math.sin(0.1*fc+i);
+      const sx2 = cx + radius*Math.cos(theta);
+      const sy2 = cy - radius*Math.sin(theta);
+      const size = 2+(i%3);
+      ctx2d.beginPath();
+      ctx2d.arc(sx2,sy2,size,0,Math.PI*2);
+      ctx2d.fillStyle = `rgba(255,255,${150+Math.floor(50*Math.sin(fc*0.1+i))},${0.6+0.4*Math.sin(fc*0.05+i)})`;
+      ctx2d.fill();
+      // sparkle cross
+      ctx2d.strokeStyle='rgba(255,255,200,0.5)';
+      ctx2d.lineWidth=0.5;
+      ctx2d.beginPath(); ctx2d.moveTo(sx2-size*2,sy2); ctx2d.lineTo(sx2+size*2,sy2); ctx2d.stroke();
+      ctx2d.beginPath(); ctx2d.moveTo(sx2,sy2-size*2); ctx2d.lineTo(sx2,sy2+size*2); ctx2d.stroke();
+    }
+  }
+}
+
+function clamp(v) { return Math.min(255, Math.max(0, v)); }
+</script>
+</body>
+</html>

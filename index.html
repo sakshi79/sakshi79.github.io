@@ -120,6 +120,14 @@
             background: linear-gradient(to bottom, var(--primary), var(--secondary));
         }
 
+
+        .card-link {
+            text-decoration: none;   /* removes underline */
+            color: inherit;          /* uses the same color as the card text */
+            display: block;          /* makes the whole card clickable */
+        }
+
+
         h1, h2, h3 {
             font-family: 'Orbitron', sans-serif;
             color: var(--text-highlight);
@@ -289,6 +297,18 @@
         <div id="projects" class="section">
             <h2>System Modules (Projects)</h2>
 
+            <a href = "faceapp.html" class="card-link">
+                <div class="card">
+                    <h3>Real-time video processing with C++ and OpenCV</h3>
+                    <span class="date">Feb 2026 – Feb 2026</span>
+                    <p>Visual-effects with face detection.</p>
+                    <ul>
+                        <li>Implemented 10+ visual effects from scratch, including Gaussian blur, sepia, emboss, etc.</li>
+                        <li>Integrated face detection for effects such as selective blur, color isolation, and halo overlay.</li>
+                    </ul>
+                </div>
+            </a>
+
             <div class="card">
                 <h3>Diffusion-guided Intrinsic Curiosity</h3>
                 <span class="date">Oct 2025 – Ongoing</span>
@@ -308,6 +328,7 @@
                     <li>Implemented PPO with attention/cross-attention mechanisms and performed ablation studies.</li>
                 </ul>
             </div>
+
         </div>
 
         <!-- EDUCATION SECTION -->
