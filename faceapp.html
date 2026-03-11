@@ -384,6 +384,7 @@
         <span id="faceStatus">NO FACES DETECTED</span>
       </div>
       <div class="effects-grid" style="margin-top:0.75rem">
+        <button class="effect-btn accent2" data-effect="faceDetect" onclick="toggleEffect('faceDetect', this)"><span>Face Box</span></button>
         <button class="effect-btn accent2" data-effect="colorFace" onclick="toggleEffect('colorFace', this)"><span>Color Face</span></button>
         <button class="effect-btn accent2" data-effect="blurOutside" onclick="toggleEffect('blurOutside', this)"><span>Blur BG</span></button>
         <button class="effect-btn accent2" data-effect="haloSparkles" onclick="toggleEffect('haloSparkles', this)"><span>Halo ✦</span></button>
@@ -516,6 +517,11 @@ function loop() {
 
   ctx.putImageData(imageData, 0, 0);
 
+  // Draw face bounding box on top (canvas overlay, not pixel data)
+  if (activeEffects.has('faceDetect')) {
+    drawFaceBoxes(ctx, detectedFaces);
+  }
+
   // FPS
   fpsCount++;
   const now = performance.now();
@@ -527,7 +533,7 @@ function loop() {
 }
 
 function needsFaceEffects() {
-  return activeEffects.has('colorFace') || activeEffects.has('blurOutside') || activeEffects.has('haloSparkles');
+  return activeEffects.has('colorFace') || activeEffects.has('blurOutside') || activeEffects.has('haloSparkles') || activeEffects.has('faceDetect');
 }
 
 // ─── Face Detection (skin-tone heuristic) ────────────────────────────────────
@@ -838,26 +844,57 @@ function applyBlurOutsideFaces(imageData, faces) {
   return blurred;
 }
 
+function drawFaceBoxes(ctx2d, faces) {
+  for (const face of faces) {
+    const x = face.x, y = face.y, w = face.width, h = face.height;
+    const cornerLen = Math.min(w, h) * 0.18;
+
+    ctx2d.strokeStyle = '#e8ff47';
+    ctx2d.lineWidth = 2;
+
+    // Corner brackets instead of full rect — matches OpenCV showFaces style
+    // Top-left
+    ctx2d.beginPath(); ctx2d.moveTo(x, y + cornerLen); ctx2d.lineTo(x, y); ctx2d.lineTo(x + cornerLen, y); ctx2d.stroke();
+    // Top-right
+    ctx2d.beginPath(); ctx2d.moveTo(x + w - cornerLen, y); ctx2d.lineTo(x + w, y); ctx2d.lineTo(x + w, y + cornerLen); ctx2d.stroke();
+    // Bottom-left
+    ctx2d.beginPath(); ctx2d.moveTo(x, y + h - cornerLen); ctx2d.lineTo(x, y + h); ctx2d.lineTo(x + cornerLen, y + h); ctx2d.stroke();
+    // Bottom-right
+    ctx2d.beginPath(); ctx2d.moveTo(x + w - cornerLen, y + h); ctx2d.lineTo(x + w, y + h); ctx2d.lineTo(x + w, y + h - cornerLen); ctx2d.stroke();
+
+    // Center crosshair dot
+    const cx2 = x + w/2, cy2 = y + h/2;
+    ctx2d.fillStyle = '#e8ff47';
+    ctx2d.beginPath(); ctx2d.arc(cx2, cy2, 3, 0, Math.PI*2); ctx2d.fill();
+
+    // Label
+    ctx2d.font = '600 11px "Space Mono", monospace';
+    ctx2d.fillStyle = '#e8ff47';
+    ctx2d.fillText('FACE DETECTED', x + 4, y - 8);
+  }
+}
+
 function drawHaloSparkles(ctx2d, faces, fc) {
   for (const face of faces) {
-    const cx = face.x + face.width/2;
-    const cy = face.y - face.height/6;
-    const radius = face.width/2;
+    const cx = face.x + face.width / 2;
+    // Place halo arc just above the top of the bounding box
+    const cy = face.y - face.height * 0.05;
+    const radius = face.width * 0.52;
     const sparkleCount = 20;
-    for (let i=0;i<sparkleCount;i++) {
-      const theta = Math.PI*(i/sparkleCount) + 0.1*Math.sin(0.1*fc+i);
-      const sx2 = cx + radius*Math.cos(theta);
-      const sy2 = cy - radius*Math.sin(theta);
-      const size = 2+(i%3);
+    for (let i = 0; i < sparkleCount; i++) {
+      const theta = Math.PI * (i / sparkleCount) + 0.1 * Math.sin(0.1 * fc + i);
+      const sx2 = cx + radius * Math.cos(theta);
+      const sy2 = cy - radius * Math.sin(theta);
+      const size = 2 + (i % 3);
       ctx2d.beginPath();
-      ctx2d.arc(sx2,sy2,size,0,Math.PI*2);
-      ctx2d.fillStyle = `rgba(255,255,${150+Math.floor(50*Math.sin(fc*0.1+i))},${0.6+0.4*Math.sin(fc*0.05+i)})`;
+      ctx2d.arc(sx2, sy2, size, 0, Math.PI * 2);
+      ctx2d.fillStyle = `rgba(255,255,${150 + Math.floor(50 * Math.sin(fc * 0.1 + i))},${0.6 + 0.4 * Math.sin(fc * 0.05 + i)})`;
       ctx2d.fill();
       // sparkle cross
-      ctx2d.strokeStyle='rgba(255,255,200,0.5)';
-      ctx2d.lineWidth=0.5;
-      ctx2d.beginPath(); ctx2d.moveTo(sx2-size*2,sy2); ctx2d.lineTo(sx2+size*2,sy2); ctx2d.stroke();
-      ctx2d.beginPath(); ctx2d.moveTo(sx2,sy2-size*2); ctx2d.lineTo(sx2,sy2+size*2); ctx2d.stroke();
+      ctx2d.strokeStyle = 'rgba(255,255,200,0.5)';
+      ctx2d.lineWidth = 0.5;
+      ctx2d.beginPath(); ctx2d.moveTo(sx2 - size * 2, sy2); ctx2d.lineTo(sx2 + size * 2, sy2); ctx2d.stroke();
+      ctx2d.beginPath(); ctx2d.moveTo(sx2, sy2 - size * 2); ctx2d.lineTo(sx2, sy2 + size * 2); ctx2d.stroke();
     }
   }
 }
