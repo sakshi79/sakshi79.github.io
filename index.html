@@ -8,7 +8,7 @@
     <!-- Google Fonts for Space/Tech Theme -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Roboto+Serif:opsz,wght@8..144,300;400;600&display=swap" rel="stylesheet">
 
     <style>
         /* --- CSS VARIABLES & RESET --- */
@@ -19,14 +19,17 @@
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-main: #e0e0e0;
             --text-highlight: #ffffff;
+            --font-heading: 'Nunito', sans-serif;
+            --font-body: 'Roboto Serif', serif;
         }
 
         body { 
             margin: 0; 
             overflow: hidden; /* Hide scrollbars on body, scroll content instead */
             background-color: #000; 
-            font-family: 'Rajdhani', sans-serif;
+            font-family: var(--font-body), sans-serif;
             color: var(--text-main);
+            /* line-height: 1.6; */
         }
 
         canvas { 
@@ -67,10 +70,10 @@
             padding: 10px 25px;
             margin: 0 10px;
             cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading), sans-serif;
             font-size: 0.9rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             transition: all 0.3s ease;
             backdrop-filter: blur(5px);
         }
@@ -129,7 +132,8 @@
 
 
         h1, h2, h3 {
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-heading), sans-serif;
+            font-weight: 800;
             color: var(--text-highlight);
             text-transform: uppercase;
         }
@@ -205,10 +209,11 @@
     <div id="ui-layer">
         <nav>
             <button class="nav-btn active" onclick="showSection('home')">Mission Control</button>
+            <button class="nav-btn" onclick="showSection('perception')">Perception Suite</button>
             <button class="nav-btn" onclick="showSection('experience')">Mission Logs</button>
-            <button class="nav-btn" onclick="showSection('projects')">System Modules</button>
-            <button class="nav-btn" onclick="showSection('achievements')">Milestones</button>
             <button class="nav-btn" onclick="showSection('education')">Training Data</button>
+            <button class="nav-btn" onclick="showSection('achievements')">Milestones</button>
+            <button class="nav-btn" onclick="showSection('projects')">System Modules</button>
         </nav>
 
         <!-- HOME SECTION -->
@@ -231,7 +236,7 @@
                         <!-- construction and maintenance in unstructured extraterrestrial environments. -->
                     </p>
                     <div class="social-links" style="text-align: center; margin-top: 20px;">
-                        <a href="bhatia.saks@northeastern.edu">Email</a>
+                        <a href="mailto:sakshib.grads@gmail.com">Email</a>
                         <a href="https://www.linkedin.com/in/sakshi-bhatia-sb/">LinkedIn</a>
                         <a href="https://github.com/sakshi79">GitHub</a>
                         <a href="https://medium.com/@sakshi77">Medium</a>
@@ -250,9 +255,44 @@
             </div>
         </div>
 
+
+        <div id="perception" class="section">
+            <h2>Perception Suite</h2>
+
+            <div class="card">
+                <h3>Augmented Reality C++ pipeline</h3>
+                <span class="date">May 2026</span>
+                <p>Augemented Reality on custom image targets with shaded 3D overlays.</p>
+                <ul>
+                    <li><strong>Intrinsics & Extrinsics:</strong> Calibrated camera matrices and estimated real-time checkerboard pose, enabled board tracking.</li>
+                    <li><strong>Virtual 3D objects: </strong>Creation of 3D objects integrated with GLFW/OpenGL to create Phong-shaded virtual objects (Eiffel Tower, UFO, etc.) with GUI select options; 3D object renedered on board</li>
+                    <li><strong>Robust Feature Tracking:</strong> Extended AR support to custom flat targets using ORB feature matching and RANSAC. </li>
+                    <li><strong>Rendering: </strong>Enabled AR display of 3D virtual objects on custom image targets in real-time, removing checkerboard dependency.
+                        <a href="https://github.com/sakshi79/CS5330/tree/main/AR_project"><span style="font-size:0.9rem; color:var(--primary)"> View code</span></a> </li>
+                    <!-- <li>Application works with a GUI interface. <a href="https://github.com/sakshi79/CS5330/tree/main/AR_project">View code</a></li> --->
+                </ul> 
+            </div>
+            
+            <a href = "faceapp.html" class="card-link">
+                <div class="card">
+                    <h3>Real-time video processing with C++ and OpenCV</h3>
+                    <span class="date">Feb 2026</span>
+                    <p>Visual-effects with face detection (View Project ↗).</p>
+                    <ul>
+                        <li>Implemented 10+ visual effects from scratch, including Gaussian blur, sepia, emboss, etc.</li>
+                        <li>Integrated face detection for effects such as selective blur, color isolation, and halo overlay.</li>
+                        <li>Built a real-time video processing pipeline with C++ and OpenCV.<a href="https://github.com/sakshi79/CS5330"> <span style="font-size:0.9rem; color:var(--primary)"> View code</span> </a> </li>
+                    </ul>
+                </div>
+            </a>
+
+        </div>
+
+    
+
         <!-- EXPERIENCE SECTION -->
         <div id="experience" class="section">
-            <h2>Mission Logs (Experience)</h2>
+            <h2>Experience</h2>
 
             <div class="card">
                 <h3>Graduate Research Assistant | HelpingHands Lab, NEU</h3>
@@ -295,9 +335,9 @@
 
         <!-- PROJECTS SECTION -->
         <div id="projects" class="section">
-            <h2>System Modules (Projects)</h2>
+            <h2>Projects</h2>
 
-            <a href = "faceapp.html" class="card-link">
+            <!-- <a href = "faceapp.html" class="card-link">
                 <div class="card">
                     <h3>Real-time video processing with C++ and OpenCV</h3>
                     <span class="date">Feb 2026 – Feb 2026</span>
@@ -307,7 +347,7 @@
                         <li>Integrated face detection for effects such as selective blur, color isolation, and halo overlay.</li>
                     </ul>
                 </div>
-            </a>
+            </a> -->
 
             <div class="card">
                 <h3>Diffusion-guided Intrinsic Curiosity</h3>
@@ -333,13 +373,13 @@
 
         <!-- EDUCATION SECTION -->
         <div id="education" class="section">
-            <h2>Training Data (Education)</h2>
+            <h2>Education</h2>
 
             <div class="card">
                 <h3>Northeastern University</h3>
                 <span class="date">Sept 2024 – Dec 2026 | Boston, MA</span>
                 <p><strong>MS in Robotics</strong></p>
-                <p>GPA: 4.0/4.0</p>
+                <p>GPA: 3.88/4.0</p>
                 <p><em>Focus: Advanced Computer Vision, Reinforcement Learning, Geometrical Deep Learning.</em></p>
             </div>
 
