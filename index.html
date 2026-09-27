@@ -1,655 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sakshi Bhatia | Building Robot Brains </title>
-    
-    <!-- Google Fonts for Space/Tech Theme -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Roboto+Serif:opsz,wght@8..144,300;400;600&display=swap" rel="stylesheet">
-
-    <style>
-        /* --- CSS VARIABLES & RESET --- */
-        :root {
-            --primary: #00f3ff;
-            --secondary: #bc13fe;
-            --glass: rgba(10, 15, 30, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #e0e0e0;
-            --text-highlight: #ffffff;
-            --font-heading: 'Nunito', sans-serif;
-            --font-body: 'Roboto Serif', serif;
-        }
-
-        body { 
-            margin: 0; 
-            overflow: hidden; /* Hide scrollbars on body, scroll content instead */
-            background-color: #000; 
-            font-family: var(--font-body), sans-serif;
-            color: var(--text-main);
-            /* line-height: 1.6; */
-        }
-
-        canvas { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            z-index: -1; 
-        }
-
-        /* --- UI CONTAINER --- */
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto; /* Allow scrolling content */
-            z-index: 10;
-        }
-
-        /* --- NAVIGATION --- */
-        nav {
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-btn {
-            background: transparent;
-            border: 1px solid var(--glass-border);
-            color: var(--primary);
-            padding: 10px 25px;
-            margin: 0 10px;
-            cursor: pointer;
-            font-family: var(--font-heading), sans-serif;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
-        }
-
-        .nav-btn:hover, .nav-btn.active {
-            background: rgba(0, 243, 255, 0.15);
-            box-shadow: 0 0 15px var(--primary);
-            border-color: var(--primary);
-            color: white;
-        }
-
-        /* --- SECTIONS --- */
-        .section {
-            display: none; /* Hidden by default */
-            max-width: 1000px;
-            margin: 40px auto;
-            padding: 0 20px;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- CARDS & LAYOUT --- */
-        .card {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            padding: 30px;
-            border-radius: 4px; /* Industrial sharp edges */
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 4px; height: 100%;
-            background: linear-gradient(to bottom, var(--primary), var(--secondary));
-        }
-
-
-        .card-link {
-            text-decoration: none;   /* removes underline */
-            color: inherit;          /* uses the same color as the card text */
-            display: block;          /* makes the whole card clickable */
-        }
-
-
-        h1, h2, h3 {
-            font-family: var(--font-heading), sans-serif;
-            font-weight: 800;
-            color: var(--text-highlight);
-            text-transform: uppercase;
-        }
-
-        h1 { font-size: 3rem; margin-bottom: 0.5rem; text-shadow: 0 0 20px rgba(0, 243, 255, 0.5); }
-        h2 { font-size: 1.8rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; margin-bottom: 20px; }
-        h3 { font-size: 1.3rem; margin-top: 0; color: var(--primary); }
-
-        .date { font-weight: 700; color: var(--secondary); display: block; margin-bottom: 10px; font-size: 0.9rem; }
-        
-        ul { list-style-type: none; padding: 0; }
-        li { margin-bottom: 8px; padding-left: 20px; position: relative; line-height: 1.6; }
-        li::before { content: '>'; position: absolute; left: 0; color: var(--primary); }
-
-        /* --- HOME PROFILE --- */
-        .profile-container {
-            text-align: center;
-            margin-top: 5vh;
-        }
-
-        .profile-img {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            border: 3px solid var(--primary);
-            object-fit: cover;
-            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
-            margin-bottom: 20px;
-            background-color: #111; /* Placeholder bg */
-        }
-
-        .tagline {
-            font-size: 1.2rem;
-            max-width: 600px;
-            margin: 0 auto 30px auto;
-            color: #aaa;
-        }
-
-        .social-links a {
-            color: var(--text-highlight);
-            text-decoration: none;
-            margin: 0 15px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            border-bottom: 1px solid transparent;
-            transition: 0.3s;
-        }
-        .social-links a:hover { border-bottom-color: var(--primary); color: var(--primary); }
-
-        /* --- SKILLS GRID --- */
-        .skills-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        .skill-item strong { color: var(--primary); }
-
-        /* --- SCROLLBAR --- */
-        #ui-layer::-webkit-scrollbar { width: 8px; }
-        #ui-layer::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
-        #ui-layer::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 4px; }
-
-        @media (max-width: 768px) {
-            h1 { font-size: 2rem; }
-            nav { flex-wrap: wrap; }
-            .nav-btn { margin-bottom: 10px; flex: 1 1 40%; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sakshi Bhatia | Robotics Researcher</title>
+  <meta name="description" content="Personal academic website of Sakshi Bhatia, MS Robotics at Northeastern University. Visual generalization, diffusion policies, and foundation models for robot manipulation.">
+  <meta name="author" content="Sakshi Bhatia">
+  <meta property="og:title" content="Sakshi Bhatia | Robotics Researcher">
+  <meta property="og:description" content="MS Robotics at Northeastern University. Visual generalization, diffusion policies, and foundation models for robot manipulation.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sakshi79.github.io/">
+  <meta name="robots" content="index, follow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 
-    <!-- UI Overlay Layer -->
-    <div id="ui-layer">
-        <nav>
-            <button class="nav-btn active" onclick="showSection('home')">Mission Control</button>
-            <button class="nav-btn" onclick="showSection('perception')">Perception Suite</button>
-            <button class="nav-btn" onclick="showSection('experience')">Mission Logs</button>
-            <button class="nav-btn" onclick="showSection('education')">Training Data</button>
-            <button class="nav-btn" onclick="showSection('achievements')">Milestones</button>
-            <button class="nav-btn" onclick="showSection('projects')">System Modules</button>
-        </nav>
+<div class="page">
+  <div id="sidebar-root"></div>
 
-        <!-- HOME SECTION -->
-        <div id="home" class="section active">
-            <div class="profile-container">
-                <img src="me.jpeg" alt="Sakshi B" class="profile-img">
-                
-                <h1>Sakshi Bhatia</h1>
-                <p class="tagline">
-                    MS Robotics @ Northeastern University<br>
-                    <!-- <span style="color: var(--primary)">Aspiring to build the infrastructure for human habitation in space.</span> -->
-                    <span style="color: var(--primary)">Aspiring to build generalizable robots.</span>
-                </p>
+  <main class="main">
 
-                <div class="card" style="text-align: left; margin-top: 40px;">
-                    <h3>Profile Summary</h3>
-                    <p>
-                        Hi, I am Sakshi, a robotics grad student specializing in robotic manipulation, working at the HelpingHands Lab, Northeastern University. My research interests lie in
-                        OOD generalization for robotic manipulation.
-                        <!-- construction and maintenance in unstructured extraterrestrial environments. -->
-                    </p>
-                    <div class="social-links" style="text-align: center; margin-top: 20px;">
-                        <a href="https://github.com/sakshi79">GitHub</a>
-                        <a href="https://www.linkedin.com/in/sakshi-bhatia-sb/">LinkedIn</a>
-                        <a href="https://medium.com/@sakshi77">Medium</a>
-                        <a href="https://www.youtube.com/@robot_nerd">YouTube</a>
-                        <a href="mailto:sakshib.grads@gmail.com">Email</a>
-                    </div>
-                </div>
+    <!-- ===== ABOUT ===== -->
+    <div class="section" id="about">
+      <h2 class="section-title">About</h2>
+      <p class="bio">
+        Hi, I'm an MS Robotics student at <a href="https://www.northeastern.edu/">Northeastern University</a>,
+        working in the <a href="https://www2.ccs.neu.edu/research/helpinghands/">Helping Hands Lab</a> with
+        Prof. <a href="https://www.khoury.northeastern.edu/people/robert-platt/">Robert Platt</a>.
+        Previously, I worked as an AI Product Analyst at <a href="https://www.sprinklr.com/">Sprinklr</a>
+        and completed my B.Tech at <a href="https://www.nitj.ac.in/">NIT Jalandhar</a>.
+      </p>
+      <p class="bio-interests">
+        I am currently interested in developing <strong>robot learning algorithms </strong> for manipulation
+        using <strong>diffusion policies</strong> and <strong>physics</strong> understanding. My current work introduces an
+        attention-based masking encoder for Diffusion Policy that improves out-of-distribution success
+        by 12.4% across 12 unseen YCB objects, integrating SAM3 at inference with no segmentation
+        supervision during training.
+      </p>
+      <p class="bio-interests">
+        My long-term goal is to <em>enable manipulation policies that generalize zero-shot to novel objects,
+        bridging the gap between narrow task-specific training and robust real-world deployment</em>.
+        I work across the full stack — building teleoperation hardware, custom
+        simulation benchmarks, and training visuomotor policies in sim and real.
+      </p>
+      <p class="bio-links">Feel free to reach out by <a href="mailto:sakshib.grads@gmail.com">email</a>.</p>
 
-                <div class="card" style="text-align: left;">
-                    <h3>Technical Arsenal</h3>
-                    <div class="skills-grid">
-                        <div class="skill-item"><strong>Languages:</strong> Python, C/C++, MATLAB, SQL</div>
-                        <div class="skill-item"><strong>Frameworks:</strong> PyTorch, TensorFlow, Isaac Sim, Robosuite</div>
-                        <div class="skill-item"><strong>Sim/Tools:</strong> Mujoco, CARLA, Fusion360, Arduino</div>
-                        <div class="skill-item"><strong>Libraries:</strong> OpenCV, Gymnasium</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <!-- News -->
+      <h2 class="section-title" style="margin-top: 40px;">News</h2>
 
-
-        <div id="perception" class="section">
-            <h2>Perception Suite</h2>
-
-            <div class="card">
-                <h3>Augmented Reality C++ pipeline</h3>
-                <span class="date">March 2026</span>
-                <p>Augemented Reality on custom image targets with shaded 3D overlays.</p>
-                <ul>
-                    <li><strong>Intrinsics & Extrinsics:</strong> Calibrated camera metrics and estimated real-time checkerboard pose for board tracking.</li>
-                    <li><strong>Virtual 3D objects: </strong>Created Phong-shaded 3D models (Eiffel Tower, UFO, etc.) using GLFW/OpenGL with a runtime GUI selector, virtual objects rendered onto the board.</li>
-                    <li><strong>Robust Feature Tracking:</strong> Extended AR to arbitrary flat targets using ORB feature matching and RANSAC homography, removing checkerboard dependency.
-                    <!-- <li><strong>Rendering: </strong>Enabled AR display of 3D virtual objects on custom image targets in real-time, removing checkerboard dependency. -->
-                        <a href="https://github.com/sakshi79/CS5330/tree/main/AR_project"><span style="font-size:0.9rem; color:var(--primary)"> View code</span></a> </li>
-                    <!-- <li>Application works with a GUI interface. <a href="https://github.com/sakshi79/CS5330/tree/main/AR_project">View code</a></li> --->
-                </ul> 
-            </div>
-
-            <div class="card">
-                <h3>Deep Networks for handwritten character recognition</h3>
-                <span class="date">April 2026</span>
-                <p>Building, training, and analyzing deep convolutional neural networks and Vision Transformers for image recognition.</p>
-                <ul>
-                    <li><strong>Model Training & Evaluation: </strong> Developed and evaluated a CNN baseline and a Vision Transformer on MNIST, achieving 99.22% classification accuracy.</li>
-                    <li><strong>Transfer Learning on Characters: </strong>Adapted the pre-trained backbone to classify custom characters, optimized the pipeline to overcome real-world domain gaps.</li>
-                    <li><strong>Systematic Analysis & Optimization: </strong> Conducted a 100-configuration hyperparameter sweep across 10 dimensions, and visualized learned features using pre-trained ResNet-18 layers and a fixed Gabor filter bank.
-                    <!-- <li><strong>Rendering: </strong>Enabled AR display of 3D virtual objects on custom image targets in real-time, removing checkerboard dependency. -->
-                    <!-- <li>Application works with a GUI interface. <a href="https://github.com/sakshi79/CS5330/tree/main/AR_project">View code</a></li> --->
-                </ul> 
-            </div>
-            
-            <a href = "faceapp.html" class="card-link">
-                <div class="card">
-                    <h3>Real-time video processing with C++ and OpenCV</h3>
-                    <span class="date">Feb 2026</span>
-                    <p>Visual-effects with face detection (View Project ↗).</p>
-                    <ul>
-                        <li>Implemented 10+ visual effects from scratch, including Gaussian blur, sepia, emboss, etc.</li>
-                        <li>Integrated face detection for effects such as selective blur, color isolation, and halo overlay.</li>
-                        <li>Built a real-time video processing pipeline with C++ and OpenCV.<a href="https://github.com/sakshi79/video_effects"> <span style="font-size:0.9rem; color:var(--primary)"> View code</span> </a> </li>
-                    </ul>
-                </div>
-            </a>
-
-        </div>
-
-    
-
-        <!-- EXPERIENCE SECTION -->
-        <div id="experience" class="section">
-            <h2>Experience</h2>
-
-            <div class="card">
-                <h3>Graduate Research Assistant | HelpingHands Lab, NEU</h3>
-                <span class="date">Feb 2025 – Present | Boston, MA</span>
-                <ul>
-                    <li>Built a GELLO arm to record demonstration data; reproduced Diffusion Policy in simulation and on UR5 arm.</li>
-                    <li>[In Progress] modified Diffusion Policy combining VLMs for visual generalization</li>
-                    <li>Focus: Robotic Manipulation, Sample Efficiency, Generalization.</li>
-                </ul>
-            </div>
-
-            <div class="card">
-                <h3>Teaching Assistant | EECE Dept, NEU</h3>
-                <span class="date">Sep 2025 – Dec 2025 | Boston, MA</span>
-                <ul>
-                    <li>Assisting for EECE5550 Mobile Robotics (Perception, Planning, Control).</li>
-                    <li>Assembled TurtleBot3 Burger and validated hardware/software stacks.</li>
-                    <!-- <li>Approaching technical problems in different ways; documenting works.</li> -->
-                </ul>
-            </div>
-
-            <div class="card">
-                <h3>Product Analyst | Sprinklr</h3>
-                <span class="date">July 2022 – Jan 2023 | Bangalore, India</span>
-                <ul>
-                    <li>Deployed regex-based automation for content filtering on child-safe platforms, reducing manual work by 93%.</li>
-                    <li>Managed 15+ global clients and executed 40+ data insight dashboards.</li>
-                </ul>
-            </div>
-
-            <div class="card">
-                <h3>Research Intern | NIT Jalandhar</h3>
-                <span class="date">July 2021 – Sep 2021 | India</span>
-                <ul>
-                    <li>Developed a Python package for 'Artificial Electric Field', a novel optimization algorithm published on PyPI.</li>
-                    <li>Visualized convergence for multi-dimensional non-linear problems.</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- PROJECTS SECTION -->
-        <div id="projects" class="section">
-            <h2>Projects</h2>
-
-            <!-- <a href = "faceapp.html" class="card-link">
-                <div class="card">
-                    <h3>Real-time video processing with C++ and OpenCV</h3>
-                    <span class="date">Feb 2026 – Feb 2026</span>
-                    <p>Visual-effects with face detection (View Project ↗).</p>
-                    <ul>
-                        <li>Implemented 10+ visual effects from scratch, including Gaussian blur, sepia, emboss, etc.</li>
-                        <li>Integrated face detection for effects such as selective blur, color isolation, and halo overlay.</li>
-                    </ul>
-                </div>
-            </a> -->
-
-            <div class="card">
-                <h3>Diffusion-guided Intrinsic Curiosity</h3>
-                <span class="date">Oct 2025 – Nov 2025</span>
-                <p>Solving long-horizon tasks with minimal demonstrations.</p>
-                <ul>
-                    <li>Implemented Intrinsic Curiosity Module (ICM) for sparse environments.</li>
-                    <li>Trained a diffusion model to learn state sequences while ICM predicts actions.</li>
-                </ul>
-            </div>
-
-            <div class="card">
-                <h3>Bipedal Walker (PPO + Attention)</h3>
-                <span class="date">Feb 2025 – April 2025</span>
-                <p>Locomotion stability for uneven terrain traversal.</p>
-                <ul>
-                    <li>Solved OpenAI Gym’s Bipedal-Walker (Avg Reward: 317) without falling.</li>
-                    <li>Implemented PPO with attention/cross-attention mechanisms and performed ablation studies.</li>
-                </ul>
-            </div>
-
-        </div>
-
-        <!-- EDUCATION SECTION -->
-        <div id="education" class="section">
-            <h2>Education</h2>
-
-            <div class="card">
-                <h3>Northeastern University</h3>
-                <span class="date">Sept 2024 – Dec 2026 | Boston, MA</span>
-                <p><strong>MS in Robotics</strong></p>
-                <p>GPA: 3.88/4.0</p>
-                <p><em>Focus: Advanced Computer Vision, Reinforcement Learning, Geometrical Deep Learning.</em></p>
-            </div>
-
-            <div class="card">
-                <h3>National Institute of Technology, Jalandhar</h3>
-                <span class="date">Aug 2018 – May 2022 | India</span>
-                <p><strong>Bachelor of Technology</strong></p>
-                <p>GPA: 8.09/10</p>
-                <p><em>Focus: Soft Computing, Mechatronics, Data Structures</em></p>
-            </div>
-        </div>
-
-        
-
-        <!-- ACHIEVEMENTS SECTION -->
-        <div id="achievements" class="section">
-            <h2>Accomplishments & Activities</h2>
-
-
-            <div class="card">
-                <h3>Achievements</h3>
-                <ul>
-                    <li><strong>Best Android XR App with Gemini Live API by Google DeepMind.</strong> Reality Hack 2026, MIT Media Labs</li>
-                    <li><strong> All India Rank 1243 / 39210 (Percentile: 96.83).</strong> GATE Data Science & AI (2024)</li>
-                    <li><strong> Cracked Post Baccalaureate Fellowship Exam (IIT Madras, Oct 2023).</strong> Robert Bosch Centre for Data Science and AI</li>
-                    <li><strong>Best Intern Award:</strong> Hybrid Electric Vehicles Internship (Dec 2018).</li>
-                </ul>
-            </div>
-
-            <div class="card">
-                <h3>Published Research</h3>
-                <p>
-                    <strong>Fuzzy-based techniques for clustering in wireless sensor networks (WSNs):</strong> Recent advances, challenges, and future directions. <br>
-                    <a href = "https://onlinelibrary.wiley.com/doi/10.1002/dac.5583"> 
-                        <span style="font-size:0.9rem; color:var(--primary)">DOI (Wiley)</span>
-                    </a>
-                </p>
-            </div>
-
-            <div class="card">
-                <h3>Auxiliary Missions</h3>
-                <ul>
-                    <li><strong>Transmission & Fabrication Engineer (Team Avishkar, 2018-2019):</strong> Designed gear characteristics, simulated transmission in MATLAB-Simulink, fabricated vehicle body using welding/cutting techniques.</li>
-                    <li><strong>Google Developer’s Student Club (2020-2022):</strong> Organized workshops and mentoring sessions in Machine Learning.</li>
-                    <li><strong>Entrepreneurship Cell (2019-2022):</strong> Official social media manager; actively created awareness on entrepreneurship.</li>
-                </ul>
-            </div>
-        </div>
-
-        <div style="height: 50px;"></div> <!-- Spacer -->
+      <div class="news-item">
+        <span class="news-date">[Sep 2026]</span>
+        <span class="news-text">Looking for <strong>robotics/ML research engineer</strong> roles starting immediately. <a href="assets/Sakshi_Bhatia_CV.pdf">CV here</a>.</span>
+      </div>
+      <div class="news-item">
+        <span class="news-date">[Sep 2026]</span>
+        <span class="news-text">Working on first-author manuscript on <a href="#research">visual generalization for Diffusion Policy</a> (Attn-DP). Submission in progress.</span>
+      </div>
+      <!-- <div class="news-item">
+        <span class="news-date">[May 2026]</span>
+        <span class="news-text">Graduated from MS Robotics degree with 3.88 GPA out of 4.0 from Northeastern University</span>
+      </div> -->
+      <div class="news-item">
+        <span class="news-date">[Jan 2026]</span>
+        <span class="news-text">Runner-up for <strong>Best Android XR App with Gemini Live API</strong> at <a href="https://www.mitrealityhack.com/">Reality Hack 2026</a> (MIT Media Labs), sponsored by Google DeepMind.</span>
+      </div>
+      <div class="news-item">
+        <span class="news-date">[Feb 2025]</span>
+        <span class="news-text">Joined <a href="https://www2.ccs.neu.edu/research/helpinghands/">Helping Hands Lab</a> as a Research Assistant with Prof. Robert Platt.</span>
+      </div>
+      <div class="news-item">
+        <span class="news-date">[Sep 2024]</span>
+        <span class="news-text">Started MS Robotics at Northeastern University.</span>
+      </div>
+      <div class="news-item">
+        <span class="news-date">[Jul 2023]</span>
+        <span class="news-text">Review paper on <a href="https://doi.org/10.1002/dac.5583">fuzzy clustering in WSNs</a> published in IJCS (Wiley).</span>
+      </div>
+      <div class="news-item">
+        <span class="news-date">[Jul 2022]</span>
+        <span class="news-text">Joined <a href="https://www.sprinklr.com/">Sprinklr</a> as an AI Product Analyst, working on automated content moderation across 200+ social channels.</span>
+      </div>
     </div>
 
-    <!-- Import Three.js via CDN -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
-            }
-        }
-    </script>
+    <!-- ===== RESEARCH ===== -->
+    <div class="section" id="research">
+      <h2 class="section-title">Research</h2>
 
-    <!-- UI Logic Script -->
-    <script>
-        function showSection(id) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(sec => {
-                sec.classList.remove('active');
-            });
-            // Remove active class from buttons
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Show selected section
-            document.getElementById(id).classList.add('active');
-            // Highlight button
-            // Find the button with onclick matching the id
-            const btns = document.getElementsByTagName('button');
-            for(let btn of btns) {
-                if(btn.getAttribute('onclick').includes(id)) {
-                    btn.classList.add('active');
-                }
-            }
-        }
-    </script>
+      <div class="pub-card">
+        <img class="pub-thumb" src="assets/pubs/attn_dp.gif" alt="Attn-DP pipeline figure">
+        <div class="pub-info">
+          <h3>Enhancing Diffusion Policy Generalization through Structured Visual Representations</h3>
+          <div class="pub-authors"><span class="me">Sakshi Bhatia</span>, Robert Platt</div>
+          <div class="pub-venue">In preparation, 2026</div>
+          <p class="pub-desc">An attention-based masking encoder (Attn-DP) trained end-to-end under BC loss, improving OOD generalization by 12.4% across 12 unseen YCB objects. Integrates frozen SAM3 at inference for zero-shot segmentation without fine-tuning. The Attention U-Net learns to suppress task-irrelevant background from imitation losses alone.</p>
+          <div class="pub-links"><a href="#">Paper (coming soon)</a></div>
+        </div>
+      </div>
 
-    <!-- Three.js Background Script -->
-    <script type="module">
-        import * as THREE from 'three';
+      <div class="pub-card">
+        <img class="pub-thumb fit" src="assets/pubs/lift2d.gif" alt="Lift2D benchmark">
+        <div class="pub-info">
+          <h3>RoboMimic2D: Lightweight 2D Manipulation Benchmarks for Policy Learning</h3>
+          <div class="pub-authors"><span class="me">Sakshi Bhatia</span></div>
+          <div class="pub-venue">Open-source benchmark, 2025</div>
+          <p class="pub-desc">A Gymnasium-compatible 2D simulation benchmark mirroring RoboMimic's task structure. Physics-based grasping via Pymunk with a gripper state machine — grip force computed from friction coefficients, not hardcoded. Zarr-backed episodic replay buffer for imitation learning data collection.</p>
+          <div class="pub-links">
+            <a href="https://github.com/sakshi79/robomimic2d">Code</a>
+            <a href="https://medium.com/@sakshi77">Blog series</a>
+          </div>
+        </div>
+      </div>
 
-        // --- Configuration ---
-        const PARTICLE_COUNT = 4000;
-        const PARTICLE_SIZE = 0.3; // Smaller, star-like
-        const MOUSE_RADIUS = 5; 
-        const MOUSE_FORCE = 0.08; 
-        const RETURN_SPEED = 0.03; // Slower, driftier
+      <div class="pub-card">
+        <img class="pub-thumb" src="assets/pubs/fuzzy_wsn.png" alt="Fuzzy clustering in WSNs">
+        <div class="pub-info">
+          <h3>Fuzzy-based Techniques for Clustering in Wireless Sensor Networks</h3>
+          <div class="pub-authors">Sandeep Verma, <span class="me">Sakshi Bhatia </span>, Sherali Zeadally, Satnam Kaur</span></div>
+          <div class="pub-venue">International Journal of Communication Systems (Wiley), July 2023</div>
+          <div class="pub-links"><a href="https://doi.org/10.1002/dac.5583">Paper (DOI)</a></div>
+        </div>
+      </div>
 
-        // --- Scene Setup ---
-        const scene = new THREE.Scene();
-        // Deep space fog
-        scene.fog = new THREE.FogExp2(0x050510, 0.03);
+      <div class="pub-card">
+        <img class="pub-thumb" src="assets/pubs/aefaalgo.gif" alt="AEFA convergence plot">
+        <div class="pub-info">
+          <h3>Artificial Electric Field Algorithm: A Python Package for Global Optimization</h3>
+          <div class="pub-authors"><span class="me">Sakshi Bhatia</span>, Anupam Yadav</div>
+          <div class="pub-venue">Dept. of Mathematics, NIT Jalandhar, 2021 &middot; Published on PyPI</div>
+          <p class="pub-desc">A pip-installable Python package implementing the Artificial Electric Field optimization algorithm. Converges to global minima/maxima for multi-dimensional, non-linear problems with 2D convergence visualization.</p>
+          <div class="pub-links">
+            <a href="https://pypi.org/project/aefaalgo/">PyPI</a>
+            <a href="https://github.com/sakshi79/aefaalgo">Github</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.z = 25;
+    <!-- ===== PROJECTS ===== -->
+    <div class="section" id="projects">
+      <h2 class="section-title">Projects</h2>
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        document.body.appendChild(renderer.domElement);
+      <div class="pub-card">
+        <img class="pub-thumb" src="assets/pubs/AR1.png" alt="AR overlay screenshot"
+             data-frames="assets/pubs/AR1.png,assets/pubs/AR2.png" data-interval="1500">
+        <div class="pub-info">
+          <h3>Augmented Reality C++ Pipeline</h3>
+          <div class="pub-venue">March 2026</div>
+          <p class="pub-desc">Real-time AR in C++ with dynamic camera calibration, markerless target tracking via ORB feature matching and RANSAC homography, and an OpenGL/GLFW rendering pipeline for shaded 3D geometry overlays on live video.</p>
+          <div class="pub-links"><a href="https://github.com/sakshi79/CS5330/tree/main/AR_project">Code</a></div>
+        </div>
+      </div>
 
-        // --- Generate Star Texture ---
-        const getSprite = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = 32;
-            canvas.height = 32;
-            const ctx = canvas.getContext('2d');
-            const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-            grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            grad.addColorStop(0.2, 'rgba(200, 240, 255, 0.8)');
-            grad.addColorStop(0.5, 'rgba(0, 100, 255, 0.2)');
-            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, 32, 32);
-            return new THREE.CanvasTexture(canvas);
-        };
+      <div class="pub-card">
+        <img class="pub-thumb fit" src="assets/pubs/GELLO_small.jpg" alt="GELLO teleoperation with UR5">
+        <div class="pub-info">
+          <h3>GELLO Teleoperation &amp; Real-Robot Data Collection</h3>
+          <div class="pub-venue">Helping Hands Lab, Feb 2025 – Present</div>
+          <p class="pub-desc">Built a GELLO teleoperation device from scratch for UR5 arm demonstration collection. Reproduced Diffusion Policy baselines across RoboMimic and RoboCasa benchmarks. Benchmarked UNet, ViT, and foundation-model visual encoders (DINO, SAM, VLMs) for manipulation policy learning.</p>
+        </div>
+      </div>
 
-        // --- Create Particle System ---
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(PARTICLE_COUNT * 3);
-        const originalPositions = new Float32Array(PARTICLE_COUNT * 3);
-        const colors = new Float32Array(PARTICLE_COUNT * 3);
 
-        const color1 = new THREE.Color(0x00f3ff); // Cyan
-        const color2 = new THREE.Color(0xffffff); // White
-        const color3 = new THREE.Color(0xbc13fe); // Purple accent
+      <div class="pub-card">
+        <img class="pub-thumb fit" src="assets/pubs/icm.png" alt="ICM+DQN results">
+        <div class="pub-info">
+          <h3>No-Reward Long-Horizon Planning with Latent World Models</h3>
+          <div class="pub-venue">Nov 2025</div>
+          <p class="pub-desc">Intrinsic Curiosity Module (ICM) with Deep Q-Network for sparse-reward environments. 75% success rate increase over vanilla DQN on long-horizon FrozenLake env.</p>
+        </div>
+      </div>
 
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            const i3 = i * 3;
-            
-            // Wider spread for space feel
-            const x = (Math.random() - 0.5) * 70;
-            const y = (Math.random() - 0.5) * 50;
-            const z = (Math.random() - 0.5) * 50;
+      <div class="pub-card">
+        <img class="pub-thumb" src="assets/pubs/muse2_lerobot.png" alt="Muse 2 headset controlling Lerobot arm">
+        <div class="pub-info">
+          <h3>Brain-Controlled Robot Arm via EEG Calibration</h3>
+          <div class="pub-venue">2026</div>
+          <p class="pub-desc">Controlling a <a href="https://huggingface.co/lerobot">Hugging Face Lerobot</a> arm using a Muse 2 EEG headset by Interaxon. A simple blink translates into physical movement — with zero data collection, zero fine-tuning, and zero pretrained models. Specific facial movements are tied to specific robot joint movements in this project. The setup relies entirely on pure device calibration mapped directly to brain signals, taking only seconds to set up.</p>
+          <div class="pub-links">
+            <a href="https://lnkd.in/p/gdTaT64J">Demo video</a>
+            <a href="https://www.sundai.club/projects/b6384eb7-2363-49cf-a9f5-9b3e8b5452b6">Project Page</a>
+          </div>
+        </div>
+      </div>
 
-            positions[i3] = x;
-            positions[i3 + 1] = y;
-            positions[i3 + 2] = z;
+      <div class="pub-card">
+        <img class="pub-thumb fit" src="assets/pubs/cannonball.gif" alt="Cannonball physics simulation">
+        <div class="pub-info">
+          <h3>Physics Simulations with Pymunk &amp; Pygame</h3>
+          <div class="pub-venue">2025</div>
+          <p class="pub-desc">A collection of 2D physics simulations with dual implementations: raw numpy and Pymunk-backed. Documented in a three-part technical blog series.</p>
+          <div class="pub-links">
+            <a href="https://github.com/sakshi79/physics_sim">Code</a>
+            <a href="https://medium.com/@sakshi77">Blog series</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
-            originalPositions[i3] = x;
-            originalPositions[i3 + 1] = y;
-            originalPositions[i3 + 2] = z;
+    <!-- ===== EXPERIENCE ===== -->
+    <div class="section" id="experience">
+      <h2 class="section-title">Experience</h2>
 
-            // Random color mix
-            const rand = Math.random();
-            let mixedColor;
-            if(rand < 0.7) mixedColor = color1.clone().lerp(color2, Math.random());
-            else mixedColor = color3;
+      <div class="exp">
+        <div class="exp-header"><h3>Graduate Research Assistant</h3><span class="date">Feb 2025 – Present</span></div>
+        <div class="org"><a href="https://www2.ccs.neu.edu/research/helpinghands/">Helping Hands Lab</a>, Northeastern University &middot; Advisor: <a href="https://www.khoury.northeastern.edu/people/robert-platt/">Robert Platt</a></div>
+        <p>Developing novel vision encoders for Diffusion Policy to improve OOD generalization. Built a GELLO teleoperation system for UR5 data collection. Created RoboMimic2D, a Gymnasium-based 2D manipulation benchmark.</p>
+      </div>
 
-            colors[i3] = mixedColor.r;
-            colors[i3 + 1] = mixedColor.g;
-            colors[i3 + 2] = mixedColor.b;
-        }
+      <div class="exp">
+        <div class="exp-header"><h3>Teaching Assistant — Mobile Robotics</h3><span class="date">Sep 2025 – Dec 2025</span></div>
+        <div class="org">EECE Department, Northeastern University</div>
+        <p>EECE5550: Perception, localization, and control. TurtleBot3 hardware deployment.</p>
+      </div>
 
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      <div class="exp">
+        <div class="exp-header"><h3>AI Product Analyst</h3><span class="date">Jul 2022 – Jan 2023</span></div>
+        <div class="org"><a href="https://www.sprinklr.com/">Sprinklr</a>, Bangalore, India</div>
+        <p>Reduced manual content moderation by 93% via regex-based automation across 200+ social channels. Managed 15+ global clients and executed 40+ data insight dashboards.</p>
+      </div>
 
-        const material = new THREE.PointsMaterial({
-            size: PARTICLE_SIZE,
-            map: getSprite(),
-            transparent: true,
-            opacity: 0.9,
-            vertexColors: true,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
-        });
+      <div class="exp">
+        <div class="exp-header"><h3>Research Intern</h3><span class="date">Jul 2021 – Oct 2021</span></div>
+        <div class="org"><a href="https://www.nitj.ac.in/">NIT Jalandhar</a>, India &middot; Advisor: Dr. Anupam Yadav</div>
+        <p>Published a pip-installable Python package for 'Artificial Electric Field,' a novel optimization algorithm for multi-dimensional, non-linear problems.</p>
+      </div>
 
-        const particles = new THREE.Points(geometry, material);
-        scene.add(particles);
+      <h2 class="section-title" style="margin-top: 40px;">Education</h2>
 
-        // --- Interaction ---
-        const mouse = new THREE.Vector2(9999, 9999);
-        const raycaster = new THREE.Raycaster();
+      <div class="exp">
+        <div class="exp-header"><h3>MS Robotics</h3><span class="date">Sep 2024 – May 2026</span></div>
+        <div class="org"><a href="https://www.northeastern.edu/">Northeastern University</a>, Boston &middot; GPA: 3.88/4.0</div>
+        <p>Computer Vision, Reinforcement Learning, Geometrical Deep Learning, Mobile Robotics.</p>
+      </div>
 
-        window.addEventListener('mousemove', (event) => {
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        });
+      <div class="exp">
+        <div class="exp-header"><h3>B.Tech</h3><span class="date">Aug 2018 – May 2022</span></div>
+        <div class="org"><a href="https://www.nitj.ac.in/">National Institute of Technology, Jalandhar</a> &middot; GPA: 8.09/10</div>
+        <p>Soft Computing, Mechatronics, Data Structures.</p>
+      </div>
+    </div>
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+    <!-- ===== AWARDS ===== -->
+    <div class="section" id="awards">
+      <h2 class="section-title">Awards</h2>
+      <div class="award"><strong>Runner-up, Best Android XR App with Gemini Live API</strong> — Reality Hack 2026 (MIT Media Labs), sponsored by Google DeepMind and Android XR.</div>
+      <div class="award"><strong>GATE Data Science &amp; AI: All India Rank 1,243 / 39,210</strong> (96.83rd percentile) — Indian Institute of Science, Bengaluru, 2024.</div>
+      <div class="award"><strong>Post-Baccalaureate Fellowship Exam</strong> — Robert Bosch Centre for Data Science and AI, IIT Madras, 2023.</div>
+    </div>
 
-        // --- Animation ---
-        const clock = new THREE.Clock();
+  </main>
+</div>
 
-        function animate() {
-            requestAnimationFrame(animate);
+<footer><div class="container">&copy; 2026 Sakshi Bhatia</div></footer>
 
-            const time = clock.getElapsedTime();
-
-            // Slower rotation for vast space feel
-            particles.rotation.y = time * 0.02;
-            particles.rotation.x = Math.sin(time * 0.1) * 0.05;
-
-            raycaster.setFromCamera(mouse, camera);
-            const ray = raycaster.ray;
-            const positionAttribute = geometry.attributes.position;
-            
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                const i3 = i * 3;
-
-                let px = positionAttribute.array[i3];
-                let py = positionAttribute.array[i3 + 1];
-                let pz = positionAttribute.array[i3 + 2];
-
-                let ox = originalPositions[i3];
-                let oy = originalPositions[i3 + 1];
-                let oz = originalPositions[i3 + 2];
-
-                // World position calc
-                const vector = new THREE.Vector3(px, py, pz);
-                vector.applyMatrix4(particles.matrixWorld);
-
-                const distanceToRay = ray.distanceToPoint(vector);
-
-                if (distanceToRay < MOUSE_RADIUS) {
-                    const force = (1 - distanceToRay / MOUSE_RADIUS) * MOUSE_FORCE;
-                    const closestPointOnRay = new THREE.Vector3();
-                    ray.closestPointToPoint(vector, closestPointOnRay);
-                    
-                    const dx = vector.x - closestPointOnRay.x;
-                    const dy = vector.y - closestPointOnRay.y;
-                    const dz = vector.z - closestPointOnRay.z;
-                    
-                    positionAttribute.array[i3]     += dx * force * 8;
-                    positionAttribute.array[i3 + 1] += dy * force * 8;
-                    positionAttribute.array[i3 + 2] += dz * force * 8;
-                }
-
-                // Elastic Return
-                positionAttribute.array[i3]     += (ox - px) * RETURN_SPEED;
-                positionAttribute.array[i3 + 1] += (oy - py) * RETURN_SPEED;
-                positionAttribute.array[i3 + 2] += (oz - pz) * RETURN_SPEED;
-                
-                // Breathing/Floating Effect
-                positionAttribute.array[i3]     += Math.sin(time * 0.5 + px) * 0.005;
-                positionAttribute.array[i3 + 1] += Math.cos(time * 0.3 + py) * 0.005;
-            }
-
-            positionAttribute.needsUpdate = true;
-            renderer.render(scene, camera);
-        }
-
-        animate();
-    </script>
+<script src="assets/js/sidebar.js"></script>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="assets/js/particles.js"></script>
+<script>
+  // Registered after sidebar.js's listener, so the canvas exists by the time this runs
+  document.addEventListener("DOMContentLoaded", function () {
+    var c = document.getElementById("particle-canvas");
+    if (c) initParticles(c);
+  });
+</script>
+<script src="assets/js/main.js"></script>
 </body>
 </html>
