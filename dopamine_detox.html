@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  BEFORE YOU PUBLISH, EDIT THESE (search for "TODO"):
+  1. TALLY_FORM_ID near the bottom of this file: paste the ID from your Tally share link
+     (https://tally.so/r/abc123  ->  "abc123").
+  2. Optional: og:image below, once you have a preview image hosted (1200x627 works well on LinkedIn).
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dopamine Detox: a reset for your browsing habits</title>
+<meta name="description" content="A Chrome extension that scores your browsing habits and limits social media for a few days when they slip. Join the waitlist.">
+<meta property="og:title" content="Dopamine Detox: a reset for your browsing habits">
+<meta property="og:description" content="A Chrome extension that scores your browsing habits and steps in when they slip. Join the waitlist for early access.">
+<meta property="og:type" content="website">
+<!-- TODO (optional): <meta property="og:image" content="https://YOUR-USERNAME.github.io/YOUR-REPO/preview.png"> -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 112 152'%3E%3CclipPath id='c'%3E%3Cpath d='M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4Z'/%3E%3C/clipPath%3E%3Cpath d='M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4Z' fill='%23F8FAF9'/%3E%3Crect clip-path='url(%23c)' x='0' y='70' width='112' height='90' fill='%234E7F7A'/%3E%3Cpath d='M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4' fill='none' stroke='%231E2A32' stroke-width='10'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF2F0;
+    --surface: #F8FAF9;
+    --ink: #1E2A32;
+    --muted: #57656A;
+    --rule: #D3DBD8;
+    --track: #DCE3E0;
+    --water: #4E7F7A;
+    --copper: #A95C27;
+    --steady: #2A3A44;
+    --deep: #1E2A32;
+    --on-deep: #EEF2F0;
+    --on-deep-muted: #AEBBBE;
+    --deep-water: #6FA59E;
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #162024;
+      --surface: #1D292E;
+      --ink: #E4EBE8;
+      --muted: #9DACB0;
+      --rule: #2D3B41;
+      --track: #2D3B41;
+      --water: #6FA59E;
+      --copper: #D58C57;
+      --steady: #B9C7CB;
+      --deep: #203E3A;
+      --on-deep: #EAF1EF;
+      --on-deep-muted: #A9C2BE;
+      --deep-water: #8BBDB6;
+      color-scheme: dark;
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+  img, svg { max-width: 100%; }
+  a { color: inherit; text-underline-offset: 3px; }
+  :focus-visible { outline: 3px solid var(--water); outline-offset: 3px; border-radius: 4px; }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  p { margin: 0; }
+
+  .wrap { max-width: 1120px; margin-inline: auto; padding-inline: clamp(20px, 5vw, 48px); }
+  .band { padding-block: clamp(64px, 9vw, 112px); }
+  .band--ruled { border-top: 1px solid var(--rule); }
+
+  .btn {
+    display: inline-block;
+    font: 700 1rem/1 var(--sans);
+    padding: 14px 20px;
+    border-radius: 6px;
+    border: 0;
+    background: var(--ink);
+    color: var(--bg);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .btn:hover { opacity: .9; }
+
+  .todo {
+    background: #FFF1B8;
+    color: #3B2F00;
+    outline: 2px dashed #C9A100;
+    outline-offset: 2px;
+    padding: 0 4px;
+    border-radius: 3px;
+  }
+
+  /* Header */
+  .site-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-weight: 600; font-size: 1.25rem; text-decoration: none; }
+  .brand svg { width: 20px; height: 27px; }
+  .site-head .btn { padding: 11px 16px; font-size: .9375rem; }
+
+  /* Vessel parts, shared */
+  .v-glass { fill: var(--surface); }
+  .v-line { fill: none; stroke: var(--ink); stroke-linecap: round; stroke-linejoin: round; }
+  .v-dash { stroke: var(--ink); stroke-dasharray: 5 4; opacity: .5; }
+  .v-low { fill: var(--copper); }
+  .v-water { fill: var(--water); }
+  .v-shine { fill: #fff; opacity: .3; }
+
+  /* Hero */
+  .hero { display: grid; gap: clamp(48px, 7vw, 88px); padding-block: clamp(32px, 6vw, 72px) clamp(64px, 9vw, 112px); }
+  @media (min-width: 920px) { .hero { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: start; } }
+  .hero h1 { font-size: clamp(2.2rem, 4.2vw, 3rem); line-height: 1.06; }
+  .hero h1 span { text-wrap: balance; }
+  .hero h1 span { display: block; }
+  .hero-lede { margin-top: 28px; font-size: 1.1875rem; max-width: 34em; color: var(--muted); }
+  .hero-lede strong { color: var(--ink); font-weight: 700; }
+
+  .join { margin-top: 40px; max-width: 520px; scroll-margin-top: 24px; }
+  .join h2 { font-size: 1.5rem; }
+  .join > p { margin-top: 6px; color: var(--muted); }
+  /* The form panel stays light in dark mode so Tally's default dark text stays readable. */
+  .form-panel {
+    margin-top: 18px;
+    background: #F8FAF9;
+    color: #1E2A32;
+    border: 1px solid #D3DBD8;
+    border-radius: 10px;
+    padding: 18px 18px 8px;
+    min-height: 120px;
+  }
+  .form-panel iframe { display: block; width: 100%; border: 0; }
+  .form-fallback { margin-top: 10px; font-size: .875rem; color: var(--muted); }
+  .form-setup { font-size: .9375rem; line-height: 1.5; padding-bottom: 10px; }
+  .form-setup code { font-size: .875rem; }
+
+  /* Browser-popup replica */
+  .demo { margin: 0; justify-self: stretch; }
+  @media (min-width: 920px) { .demo { justify-self: end; width: 100%; max-width: 400px; } }
+  .chrome-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 7px 10px 7px 14px;
+  }
+  .chrome-bar .omni { flex: 1; font-size: .8125rem; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 4px 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .chrome-bar .ext { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--track); }
+  .chrome-bar .ext svg { width: 12px; height: 16px; }
+  .pop {
+    position: relative;
+    margin: 12px 0 0 auto;
+    width: min(100%, 340px);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 18px 20px 20px;
+    font-size: .875rem;
+    line-height: 1.45;
+    box-shadow: 0 18px 40px -24px rgba(30, 42, 50, .45);
+  }
+  .pop::before {
+    content: "";
+    position: absolute; top: -7px; right: 18px;
+    width: 12px; height: 12px;
+    background: var(--surface);
+    border-left: 1px solid var(--rule); border-top: 1px solid var(--rule);
+    transform: rotate(45deg);
+  }
+  .pop-head { display: flex; justify-content: space-between; align-items: center; font-family: var(--serif); font-weight: 600; font-size: 1rem; }
+  .pop-head svg { width: 16px; height: 16px; stroke: var(--muted); fill: none; stroke-width: 1.6; stroke-linecap: round; }
+  .pop-score { display: grid; grid-template-columns: 64px 1fr; gap: 16px; margin-top: 14px; }
+  .pop-score svg { width: 64px; height: 87px; }
+  .pop-big { font-family: var(--serif); font-size: 1.5rem; line-height: 1.1; font-weight: 500; }
+  .pop-sub { color: var(--muted); margin-top: 2px; }
+  .pop-note { color: var(--muted); font-size: .8125rem; margin-top: 6px; }
+  .pop hr { border: 0; border-top: 1px solid var(--rule); margin: 16px 0; }
+  .pop-h { font-family: var(--serif); font-weight: 600; font-size: 1rem; margin-bottom: 8px; }
+  .meter { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; }
+  .meter span:last-child { color: var(--muted); white-space: nowrap; }
+  .bar { height: 5px; border-radius: 3px; background: var(--track); margin-top: 5px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: var(--w); background: var(--c, var(--copper)); border-radius: 3px; }
+  .pop-small { color: var(--muted); margin-top: 8px; }
+  .demo figcaption { margin-top: 12px; font-size: .8125rem; color: var(--muted); text-align: right; }
+
+  /* Habits */
+  .split { display: grid; gap: 40px; }
+  @media (min-width: 880px) { .split { grid-template-columns: minmax(0, .9fr) minmax(0, 1.3fr); gap: 72px; } }
+  .split h2 { font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.08; max-width: 14ch; }
+  .split .intro { margin-top: 18px; color: var(--muted); max-width: 30em; }
+  .habits { margin: 0; }
+  .habits div { padding-block: 20px; border-top: 1px solid var(--rule); display: grid; gap: 4px; }
+  .habits div:last-child { border-bottom: 1px solid var(--rule); }
+  @media (min-width: 600px) { .habits div { grid-template-columns: 15em 1fr; gap: 24px; } }
+  .habits dt { font-family: var(--serif); font-size: 1.1875rem; font-weight: 500; line-height: 1.3; }
+  .habits dd { margin: 0; color: var(--muted); }
+
+  /* Steps */
+  .steps-head { font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.08; }
+  .steps { list-style: none; margin: 48px 0 0; padding: 0; display: grid; gap: 40px; counter-reset: step; }
+  @media (min-width: 880px) { .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; } }
+  .steps li { counter-increment: step; border-top: 2px solid var(--ink); padding-top: 18px; }
+  .steps li::before { content: counter(step); display: block; font-family: var(--serif); font-size: 3.25rem; line-height: 1; color: var(--water); margin-bottom: 14px; }
+  .steps h3 { font-size: 1.375rem; line-height: 1.2; }
+  .steps p { margin-top: 10px; color: var(--muted); max-width: 30em; }
+
+  /* Breathing */
+  .breath { background: var(--deep); color: var(--on-deep); }
+  .breath .v-glass { fill: rgba(255, 255, 255, .06); }
+  .breath .v-line { stroke: var(--on-deep); }
+  .breath .v-water { fill: var(--deep-water); }
+  .breath-grid { display: grid; gap: 48px; align-items: center; }
+  @media (min-width: 880px) { .breath-grid { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 80px; } }
+  .breath-vessel { display: grid; justify-items: center; }
+  .breath-vessel svg { width: clamp(150px, 22vw, 230px); height: auto; overflow: visible; }
+  #breathWater { transition: transform 5s cubic-bezier(.45, 0, .55, 1); }
+  @media (prefers-reduced-motion: reduce) { #breathWater { transition: none; } }
+  .breath h2 { font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.08; max-width: 16ch; }
+  .breath p { color: var(--on-deep-muted); }
+  .breath .lead { margin-top: 18px; max-width: 32em; }
+  .breath-controls { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+  .breath .btn { background: var(--on-deep); color: var(--deep); }
+  .breath :focus-visible { outline-color: var(--on-deep); }
+  .cue { font-family: var(--serif); font-size: 1.75rem; line-height: 1.2; min-height: 1.2em; color: var(--on-deep); }
+  .round { font-size: .9375rem; color: var(--on-deep-muted); min-height: 1.6em; }
+  .instead { margin-top: 36px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, .18); }
+  .instead h3 { font-size: 1.1875rem; }
+  .instead ul { margin: 10px 0 0; padding-left: 1.1em; color: var(--on-deep-muted); }
+  .instead li + li { margin-top: 4px; }
+
+  /* Honesty + questions */
+  .mirror p { margin-top: 18px; color: var(--muted); max-width: 30em; }
+  .faq h3 { font-size: 1.375rem; margin-bottom: 8px; }
+  .faq details { border-top: 1px solid var(--rule); }
+  .faq details:last-of-type { border-bottom: 1px solid var(--rule); }
+  .faq summary {
+    list-style: none; cursor: pointer;
+    display: flex; justify-content: space-between; gap: 16px;
+    padding-block: 18px;
+    font-family: var(--serif); font-size: 1.1875rem; font-weight: 500;
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font-family: var(--sans); color: var(--muted); }
+  .faq details[open] summary::after { content: "\2212"; }
+  .faq details p { padding-bottom: 20px; color: var(--muted); max-width: 36em; }
+
+  /* Closing */
+  .closing { display: grid; gap: 24px; }
+  @media (min-width: 880px) { .closing { grid-template-columns: 1fr auto; align-items: end; } }
+  .closing h2 { font-size: clamp(2.2rem, 5vw, 3.5rem); line-height: 1.04; max-width: 15ch; }
+  .closing p { margin-top: 16px; color: var(--muted); }
+  .site-foot { padding-block: 28px 40px; border-top: 1px solid var(--rule); font-size: .875rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header class="wrap site-head">
+  <a class="brand" href="#top" id="top">
+    <svg viewBox="0 0 112 152" aria-hidden="true">
+      <clipPath id="clip-logo"><path d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4Z"/></clipPath>
+      <path class="v-glass" d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4Z"/>
+      <rect class="v-water" clip-path="url(#clip-logo)" x="0" y="66" width="112" height="90"/>
+      <path class="v-line" stroke-width="12" d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4"/>
+    </svg>
+    Dopamine Detox
+  </a>
+  <a class="btn" href="#join">Join the waitlist</a>
+</header>
+
+<main>
+  <section class="wrap hero">
+    <div>
+      <h1><span>A detox that starts</span> <span>when your browsing slips.</span></h1>
+      <p class="hero-lede"><strong>Dopamine Detox is a Chrome extension that scores your browsing habits from 0 to 100.</strong> When your score drops too low, your feeds go on a ration for a few days. Use up your minutes and they close until midnight. You set the limits.</p>
+
+      <div class="join" id="join">
+        <h2>Get early access</h2>
+        <p>Join the waitlist and we’ll invite you to the beta before launch.</p>
+        <div class="form-panel" id="formPanel">
+          <div class="form-setup" id="formSetup">
+            <span class="todo"><strong>Your waitlist form goes here.</strong> Open <code>index.html</code>, find <code>TALLY_FORM_ID</code> near the bottom, and paste your Tally form ID.</span>
+          </div>
+        </div>
+        <p class="form-fallback" id="formFallback" hidden>Form not loading? <a id="formLink" href="#" target="_blank" rel="noopener">Open it in a new tab</a>.</p>
+      </div>
+    </div>
+
+    <figure class="demo" aria-label="The Dopamine Detox popup, showing a baseline of 20 out of 100 on day 1 of a detox">
+      <div aria-hidden="true">
+        <div class="chrome-bar">
+          <span class="omni">mail.google.com</span>
+          <span class="ext">
+            <svg viewBox="0 0 112 152">
+              <clipPath id="clip-ext"><path d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4Z"/></clipPath>
+              <path class="v-glass" d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4Z"/>
+              <rect class="v-low" clip-path="url(#clip-ext)" x="0" y="112" width="112" height="44"/>
+              <path class="v-line" stroke-width="14" d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4"/>
+            </svg>
+          </span>
+        </div>
+        <div class="pop">
+          <div class="pop-head">
+            Dopamine Detox
+            <svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="10" cy="4" r="1.6"/><circle cx="5" cy="8" r="1.6"/><circle cx="11" cy="12" r="1.6"/></svg>
+          </div>
+          <div class="pop-score">
+            <svg viewBox="0 0 112 152">
+              <clipPath id="clip-pop"><path d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4Z"/></clipPath>
+              <path class="v-glass" d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4Z"/>
+              <g clip-path="url(#clip-pop)">
+                <rect class="v-low" x="0" y="117.6" width="112" height="40"/>
+                <rect class="v-shine" x="0" y="117.6" width="112" height="3"/>
+              </g>
+              <line class="v-dash" x1="12" x2="100" y1="89.2" y2="89.2" stroke-width="2"/>
+              <path class="v-line" stroke-width="6" d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4"/>
+            </svg>
+            <div>
+              <p class="pop-big">Baseline low</p>
+              <p class="pop-sub">20 out of 100</p>
+              <p class="pop-note">Average of your last 3 active days. A detox starts below 40, the dashed line.</p>
+            </div>
+          </div>
+          <hr>
+          <p class="pop-h">Detox, day 1 of 3</p>
+          <div class="meter"><span>Social time today</span><span>1m of 10m</span></div>
+          <div class="bar"><i style="--w: 10%; --c: var(--water)"></i></div>
+          <p class="pop-small">9m left. After that, social sites close until midnight.</p>
+          <hr>
+          <p class="pop-h">What’s pulling it down</p>
+          <div class="meter"><span>Share of browsing on social</span><span>48%</span></div>
+          <div class="bar"><i style="--w: 92%"></i></div>
+          <div class="meter"><span>Checking habit</span><span>38 opens a day</span></div>
+          <div class="bar"><i style="--w: 94%"></i></div>
+          <div class="meter"><span>Time on social</span><span>1h 59m a day</span></div>
+          <div class="bar"><i style="--w: 62%; --c: var(--steady)"></i></div>
+          <div class="meter"><span>Tab hopping</span><span>41 an hour</span></div>
+          <div class="bar"><i style="--w: 68%"></i></div>
+          <div class="meter"><span>Late-night scrolling</span><span>20m a night</span></div>
+          <div class="bar"><i style="--w: 42%; --c: var(--steady)"></i></div>
+        </div>
+      </div>
+      <figcaption>Dopamine Detox Extension in your browser</figcaption>
+    </figure>
+  </section>
+
+  <section class="band band--ruled">
+    <div class="wrap split">
+      <div>
+        <h2>Your score comes from five habits</h2>
+        <p class="intro">Install it and browse the way you normally do. After a couple of days your habits settle into a baseline, and the popup shows you which ones are pulling it down.</p>
+      </div>
+      <dl class="habits">
+        <div><dt>Share of browsing on social</dt><dd>How much of your time in Chrome goes to social sites.</dd></div>
+        <div><dt>Checking habit</dt><dd>How many times a day you open a social site, even for a few seconds.</dd></div>
+        <div><dt>Time on social</dt><dd>Your total time on social sites each day.</dd></div>
+        <div><dt>Tab hopping</dt><dd>How often you jump from one site to another in an hour.</dd></div>
+        <div><dt>Late-night scrolling</dt><dd>Social time late at night, when it’s easiest to lose an hour.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="band band--ruled">
+    <div class="wrap">
+      <h2 class="steps-head">How a detox runs</h2>
+      <ol class="steps">
+        <li>
+          <h3>Your baseline settles</h3>
+          <p>Your score is the average of your last three active days, so one bad evening doesn’t set it off.</p>
+        </li>
+        <li>
+          <h3>When it drops too low, a detox starts</h3>
+          <p>For the number of days you choose, social sites get a daily allowance you set. Everything else stays open, and a notification tells you when five minutes are left.</p>
+        </li>
+        <li>
+          <h3>At the limit, social closes until midnight</h3>
+          <p>Instead of the feed, you get a short breathing exercise and a few things to do away from the screen. You can end a detox early whenever you want.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band breath" aria-labelledby="breath-title">
+    <div class="wrap breath-grid">
+      <div class="breath-vessel">
+        <svg viewBox="0 0 112 152" aria-hidden="true">
+          <clipPath id="clip-breath"><path d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4Z"/></clipPath>
+          <path class="v-glass" d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4Z"/>
+          <g clip-path="url(#clip-breath)">
+            <g id="breathWater" style="transform: translateY(56.8px)">
+              <rect class="v-water" x="0" y="4" width="112" height="160"/>
+              <rect class="v-shine" x="0" y="4" width="112" height="2.5"/>
+            </g>
+          </g>
+          <path class="v-line" stroke-width="5" d="M6 4V116A30 30 0 0 0 36 146H76A30 30 0 0 0 106 116V4"/>
+        </svg>
+      </div>
+      <div>
+        <h2 id="breath-title">When time’s up, you get thirty seconds to breathe</h2>
+        <p class="lead">This is what you see if you open a social site after your social time for the day is used up. Breathe in as the water rises and out as it falls. Three rounds take about thirty seconds. Try it here.</p>
+        <div class="breath-controls">
+          <button class="btn" id="breathBtn" type="button">Start breathing</button>
+          <div>
+            <p class="cue" id="cue" aria-live="polite"></p>
+            <p class="round" id="round"></p>
+          </div>
+        </div>
+        <div class="instead">
+          <h3>Then it suggests something else to do</h3>
+          <ul>
+            <li>Step outside for ten minutes without your phone.</li>
+            <li>Read a few pages of a paper book.</li>
+            <li>Write down the task you’ve been avoiding and do the first five minutes of it.</li>
+            <li>Stretch, make tea, or clear one surface.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap split">
+      <div class="mirror">
+        <h2>A mirror, not a diagnosis</h2>
+        <p>The score is estimated from how you browse. It doesn’t measure anything in your brain, and it isn’t medical advice. It’s there to show you a pattern you might not have noticed, and to give you a few days to change it.</p>
+      </div>
+      <div class="faq">
+        <h3>Questions</h3>
+        <details>
+          <summary>Where does my browsing data go?</summary>
+          <p>It stays in your browser. Nothing is sent anywhere, and only site names and time totals are kept, never full web addresses or what’s on the page. Older days are deleted automatically.</p>
+        </details>
+        <details>
+          <summary>Which sites count as social?</summary>
+          <p>Sites like Instagram, TikTok and YouTube. The dashboard marks each social site with a dot, so you can always see what’s being counted.</p>
+        </details>
+        <details>
+          <summary>Can I change the limits?</summary>
+          <p>Yes. You choose how low your score has to drop before a detox starts, how much social time you get each day, and how many days a detox lasts. You can also edit which sites count as social.</p>
+        </details>
+        <details>
+          <summary>Does it work on my phone?</summary>
+          <p>Not yet, but an Android app is coming soon to the Play Store. For now, it’s a Chrome extension for desktop and laptop computers.</p>
+        </details>
+        <details>
+          <summary>When can I try it?</summary>
+          <p>Soon. We’ll invite people from the waitlist to the beta first.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band--ruled">
+    <div class="wrap closing">
+      <div>
+        <h2>Be one of the first to try it</h2>
+        <p>Investing in tools that give people their attention back? Write to us at <a href="mailto:sakshi.buildng.ai@gmail.com">sakshi.buildng.ai@gmail.com</a>.</p>
+      </div>
+      <a class="btn" href="#join">Join the waitlist</a>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap site-foot">
+  © 2026 Dopamine Detox. Not affiliated with Google. Chrome is a trademark of Google LLC.
+</footer>
+
+<script>
+  /* ------------------------------------------------------------------
+     TODO: paste your Tally form ID between the quotes.
+     Your share link looks like https://tally.so/r/abc123, so the ID is "abc123".
+     ------------------------------------------------------------------ */
+  const TALLY_FORM_ID = "";
+
+  (function setUpForm() {
+    if (!TALLY_FORM_ID) return;
+    const panel = document.getElementById("formPanel");
+    document.getElementById("formSetup").remove();
+
+    const frame = document.createElement("iframe");
+    frame.dataset.tallySrc = "https://tally.so/embed/" + encodeURIComponent(TALLY_FORM_ID) +
+      "?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1";
+    frame.loading = "lazy";
+    frame.height = "260";
+    frame.title = "Join the Dopamine Detox waitlist";
+    panel.appendChild(frame);
+
+    const link = document.getElementById("formLink");
+    link.href = "https://tally.so/r/" + encodeURIComponent(TALLY_FORM_ID);
+    document.getElementById("formFallback").hidden = false;
+
+    const loadFrames = () => {
+      if (typeof Tally !== "undefined") { Tally.loadEmbeds(); }
+      else { document.querySelectorAll("iframe[data-tally-src]:not([src])").forEach(f => { f.src = f.dataset.tallySrc; }); }
+    };
+    const s = document.createElement("script");
+    s.src = "https://tally.so/widgets/embed.js";
+    s.onload = loadFrames;
+    s.onerror = loadFrames;
+    document.body.appendChild(s);
+  })();
+
+  /* Breathing demo: three rounds, five seconds in and five seconds out. */
+  (function setUpBreathing() {
+    const water = document.getElementById("breathWater");
+    const btn = document.getElementById("breathBtn");
+    const cue = document.getElementById("cue");
+    const round = document.getElementById("round");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const REST = 0.6, HIGH = 0.88, LOW = 0.14, HALF = 5000, ROUNDS = 3;
+    let timers = [];
+    let running = false;
+
+    const setLevel = level => {
+      if (reduceMotion) return;
+      water.style.transform = "translateY(" + ((1 - level) * 142).toFixed(1) + "px)";
+    };
+    const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+    const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+
+    function stop(message) {
+      clearTimers();
+      running = false;
+      btn.textContent = message ? "Breathe again" : "Start breathing";
+      cue.textContent = message || "";
+      round.textContent = "";
+      setLevel(REST);
+    }
+
+    function start() {
+      running = true;
+      btn.textContent = "Stop";
+      let t = 0;
+      for (let r = 1; r <= ROUNDS; r++) {
+        at(t, () => { cue.textContent = "Breathe in"; round.textContent = "Round " + r + " of " + ROUNDS; setLevel(HIGH); });
+        t += HALF;
+        at(t, () => { cue.textContent = "Breathe out"; setLevel(LOW); });
+        t += HALF;
+      }
+      at(t, () => stop("That’s thirty seconds."));
+    }
+
+    btn.addEventListener("click", () => (running ? stop() : start()));
+  })();
+</script>
+</body>
+</html>
